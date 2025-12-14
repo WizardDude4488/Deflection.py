@@ -21,6 +21,14 @@ text_font = pygame.font.Font("Retro Gaming.ttf", 30)
 #load images
 Menu_Select_Arrow = pygame.image.load('Menu_Select_Arrow.png')
 
+Small_Arrow_Left = pygame.image.load('Small_Arrow_Left.png')
+Small_Arrow_Up = pygame.image.load('Small_Arrow_Up.png')
+Small_Arrow_Right = pygame.image.load('Small_Arrow_Right.png')
+Small_Arrow_Down = pygame.image.load('Small_Arrow_Down.png')
+
+Horizontal_Deflect_Bar = pygame.image.load('Horizontal_Deflect_Bar.png')
+Vertical_Deflect_Bar = pygame.image.load('Vertical_Deflect_Bar.png')
+
 
 
 #load sounds
@@ -35,13 +43,14 @@ def draw_text(text, font, text_col, x, y):
 
 #helper function for drawing an image to the screen from a file
 #only updates the part of the screen containing the image
-def draw_image(name, x, y, update):
-    image = name
-    image_rect = image.get_rect(center = (x, y))
-    screen.blit(image, (x, y))
+def draw_image(image, x, y, update):
+    image_rect = image.get_rect(center = (x,y))
     if update:
+        pygame.draw.rect(screen, (0,0,0), image_rect)
+        screen.blit(image, image_rect)
         pygame.display.update(image_rect)
     else:
+        screen.blit(image, image_rect)
         pygame.display.flip()
 
 #helper function for filling a rect with a color
@@ -50,6 +59,7 @@ def draw_rect(width, height, x, y, color):
     rect = pygame.Rect(x, y, width, height)
     pygame.draw.rect(screen, color, rect)
     pygame.display.update(rect)
+
 
 #cutscene function that uses the draw_image function
 #will probably implement later but focusing on gameplay for now
@@ -67,6 +77,9 @@ start = True
 player_select = False
 waiting = True
 playing = True
+
+#player variables
+global player_1_direction
 
 #frame rate stuff
 FPS = 120
@@ -118,15 +131,15 @@ while running:
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_UP:
                     #select 2 player
-                    draw_image(Menu_Select_Arrow, 300, 260, True)
-                    draw_rect(50, 50, 300, 360, (0,0,0))
+                    draw_image(Menu_Select_Arrow, 300, 275, True)
+                    draw_rect(50, 50, 275, 350, (0,0,0))
                     Menu_Select_Sound.play()
                     game_mode = 1
                     print(game_mode)
                 if event.key == pygame.K_DOWN:
                     #select 1 player
-                    draw_image(Menu_Select_Arrow, 300, 360, True)
-                    draw_rect(50, 50, 300, 260, (0, 0, 0))
+                    draw_image(Menu_Select_Arrow, 300, 375, True)
+                    draw_rect(50, 50, 275, 250, (0, 0, 0))
                     Menu_Select_Sound.play()
                     game_mode = 2
                     print(game_mode)
@@ -170,17 +183,38 @@ while running:
                 running = False
                 start = False
                 player_select = False
+                playing = False
             if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_w:
-                    #turn player one up
+                if event.key == pygame.K_a:
+                    #turn player one to the left
                     print("Left")
-                    draw_image()
-                if event.key == pygame.K_d:
-                    #turn player one to the right
-                    print("Forward")
+                    draw_image(Small_Arrow_Left, 512, 20, True)
+                    player_1_direction = "Left"
                 if event.key == pygame.K_s:
                     #turn player one down
+                    print("Down")
+                    draw_image(Small_Arrow_Down, 512, 20, True)
+                    player_1_direction = "Down"
+                if event.key == pygame.K_d:
+                    #turn player to the right
                     print("Right")
+                    draw_image(Small_Arrow_Right, 512, 20, True)
+                    player_1_direction = "Right"
+                if event.key == pygame.K_f:
+                    if player_1_direction == "Left":
+                    if player_1_direction == "Down":
+                        draw_image(Vertical_Deflect_Bar, 512, 20)
+
+                #need a function or method to display the deflection bar for a certain number of frames
+                #method takes in image name, x, y, and number of frames
+                #the method will run until it reaches a targeted frame
+                #the targeted frame will be based on the current frame when the method is first called, plus some number of frames
+                #each frame, the game will iterate through the while loop, and check to see if the current frame is equal to the targeted frame
+                #if so, it will clear the image and assign a value of false to a global variable for whether the player is blocking on that side
+                #if not, it will not return any value
+
+
+
 
 
 
