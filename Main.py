@@ -60,6 +60,71 @@ def draw_rect(width, height, x, y, color):
     pygame.draw.rect(screen, color, rect)
     pygame.display.update(rect)
 
+#player variables
+player_1_direction = ""
+player_1_deflection = ""
+player_2_direction = ""
+player_2_deflection = ""
+
+#globals for player 1 and 2 x and y positions
+#make sure to create player objects after variable declaration so interpreter knows what value to assign for the new object's parameters
+player_1_x = screen_width / 2
+player_1_y = 20
+
+player_2_x = screen_width / 2
+player_2_y = screen_height - 20
+
+#class for player functions like checking whether a deflection bar should be displaying on a certain frame
+#I think this implementation is really garbage and overly complicated, just make a class for player 1 and another for player 2 and forget about the initialization stuff
+class Player:
+    def __init__(self, player_number):
+        self.player_number = player_number
+        self.frame = 0
+        if player_number == 1:
+            self.player_number_deflection = player_1_deflection
+            self.player_number_x = player_1_x
+            self.player_number_y = player_1_y
+        if player_number == 2:
+            self.player_number_deflection = player_2_deflection
+            self.player_number_x = player_2_x
+            self.player_number_y = player_2_y
+    def check_bar_for_frame(self):
+        if self.frame == 0.25 * FPS:
+            if self.player_number == 1:
+                global player_1_deflection
+                player_1_deflection = ""
+
+                if self.player_number_deflection == "Right":
+                    draw_rect(4, 44, self.player_number_x + 30, self.player_number_y, (0, 0, 0))
+                if self.player_number_deflection == "Left":
+                    draw_rect(4, 44, self.player_number_x - 30, self.player_number_y, (0, 0, 0))
+                if self.player_number_deflection == "Down":
+                    draw_rect(4, 44, self.player_number_x - 30, self.player_number_y, (0, 0, 0))
+
+            if self.player_number == 2:
+                global player_2_deflection
+                player_2_deflection = ""
+
+                if self.player_number_deflection == "Right":
+                    draw_rect(4, 44, self.player_number_x + 30, self.player_number_y, (0, 0, 0))
+                if self.player_number_deflection == "Left":
+                    draw_rect(4, 44, self.player_number_x - 30, self.player_number_y, (0, 0, 0))
+                if self.player_number_deflection == "Up":
+                    draw_rect(4, 44, self.player_number_x, self.player_number_y - 30, (0, 0, 0))
+
+            #when the deflection bar is deleted, assign the relative frame number to 0
+            self.frame = 0
+
+        else:
+            self.frame += 1
+
+
+
+#creating player 1 and 2 objects
+player_1 = Player(1)
+player_2 = Player(2)
+
+
 
 #cutscene function that uses the draw_image function
 #will probably implement later but focusing on gameplay for now
@@ -78,8 +143,6 @@ player_select = False
 waiting = True
 playing = True
 
-#player variables
-global player_1_direction
 
 #frame rate stuff
 FPS = 120
@@ -188,22 +251,32 @@ while running:
                 if event.key == pygame.K_a:
                     #turn player one to the left
                     print("Left")
-                    draw_image(Small_Arrow_Left, 512, 20, True)
+                    draw_image(Small_Arrow_Left, player_1_x, player_1_y, True)
                     player_1_direction = "Left"
                 if event.key == pygame.K_s:
                     #turn player one down
                     print("Down")
-                    draw_image(Small_Arrow_Down, 512, 20, True)
+                    draw_image(Small_Arrow_Down, player_1_x, player_1_y, True)
                     player_1_direction = "Down"
                 if event.key == pygame.K_d:
                     #turn player to the right
                     print("Right")
-                    draw_image(Small_Arrow_Right, 512, 20, True)
+                    draw_image(Small_Arrow_Right, player_1_x, player_1_y, True)
                     player_1_direction = "Right"
                 if event.key == pygame.K_f:
                     if player_1_direction == "Left":
+                        draw_image(Vertical_Deflect_Bar, player_1_x - 30, player_1_y, True)
+                        player_1_deflection = player_1_direction
                     if player_1_direction == "Down":
-                        draw_image(Vertical_Deflect_Bar, 512, 20)
+                        draw_image(Horizontal_Deflect_Bar, player_1_x, player_1_y + 30, True)
+                        player_1_deflection = player_1_direction
+                    if player_1_direction == "Right":
+                        draw_image(Vertical_Deflect_Bar, player_1_x + 30, player_1_y, True)
+                        player_1_deflection = player_1_direction
+
+        player_1.check_bar_for_frame()
+
+
 
                 #need a function or method to display the deflection bar for a certain number of frames
                 #method takes in image name, x, y, and number of frames
