@@ -76,8 +76,7 @@ player_1_y = 20
 player_2_x = screen_width / 2
 player_2_y = screen_height - 20
 
-#class for player functions like checking whether a deflection bar should be displaying on a certain frame
-#I think this implementation is really garbage and overly complicated, just make a class for player 1 and another for player 2 and forget about the initialization stuff
+#classes for player functions like checking whether a deflection bar should be displaying on a certain frame
 
 class Player1:
     def __init__(self, player_x, player_y):
@@ -118,14 +117,6 @@ class Player2:
             self.frame += 1
 
 class Particles:
-    def __init__(self):
-        self.list = []
-    def spawn_particle(self):
-        #I think this should append a new particle to the list in the outer class, but it doesn't appear to be working
-        #When it works, I should be able to reference each of the particles by their index in the list found in the outer class, rather than having to reference each by a unique name
-        #I could also try using a dictionary instead, but I think this is better since I'll be able to iterate through the list with a for loop using simple integer iteration
-        self.list.append(Particle(1, 1, 1, 1))
-
     class Particle:
         def __init__(self, pos_x, pos_y, vel_x, vel_y, radius):
             self.pos_x, self.pos_y, self.vel_x, self.vel_y, self.radius = pos_x, pos_y, vel_x, vel_y, radius
@@ -138,7 +129,19 @@ class Particles:
             # put the list for the collideable objects here
             if self.rect.collidelist()
 
+    def __init__(self):
+        self.list = []
+    def spawn_particle(self):
+        #I think this should append a new particle to the list in the outer class, but it doesn't appear to be working
+        #When it works, I should be able to reference each of the particles by their index in the list found in the outer class, rather than having to reference each by a unique name
+        #I could also try using a dictionary instead, but I think this is better since I'll be able to iterate through the list with a for loop using simple integer iteration
+        particle = self.Particle(screen_width / 2, screen_height / 2, 0, -1, 1)
+        self.list.append(particle)
+
+
+
             #we can just assume that all the surfaces in the game can only be collided with horizontaly or vertically, not both, so this should make things easier.
+
 
 
         #create a list to hold all the particles
