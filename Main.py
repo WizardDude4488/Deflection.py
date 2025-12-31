@@ -2,6 +2,7 @@ import pygame
 import math
 import numpy as np
 from pygame import mixer
+import random
 
 pygame.mixer.pre_init(44100, -16, 2, 512)
 mixer.init()
@@ -57,6 +58,7 @@ def draw_image(image, x, y, update):
 #updates the area of the screen filled by the rect
 def draw_rect(width, height, x, y, color):
     rect = pygame.Rect(x, y, width, height)
+    rect.center = (x, y)
     pygame.draw.rect(screen, color, rect)
     pygame.display.update(rect)
 
@@ -76,53 +78,76 @@ player_2_y = screen_height - 20
 
 #class for player functions like checking whether a deflection bar should be displaying on a certain frame
 #I think this implementation is really garbage and overly complicated, just make a class for player 1 and another for player 2 and forget about the initialization stuff
-class Player:
-    def __init__(self, player_number):
-        self.player_number = player_number
+
+class Player1:
+    def __init__(self, player_x, player_y):
         self.frame = 0
-        if player_number == 1:
-            self.player_number_deflection = player_1_deflection
-            self.player_number_x = player_1_x
-            self.player_number_y = player_1_y
-        if player_number == 2:
-            self.player_number_deflection = player_2_deflection
-            self.player_number_x = player_2_x
-            self.player_number_y = player_2_y
+        self.player_x = player_x
+        self.player_y = player_y
+
     def check_bar_for_frame(self):
         if self.frame == 0.25 * FPS:
-            if self.player_number == 1:
-                global player_1_deflection
-                player_1_deflection = ""
-
-                if self.player_number_deflection == "Right":
-                    draw_rect(4, 44, self.player_number_x + 30, self.player_number_y, (0, 0, 0))
-                if self.player_number_deflection == "Left":
-                    draw_rect(4, 44, self.player_number_x - 30, self.player_number_y, (0, 0, 0))
-                if self.player_number_deflection == "Down":
-                    draw_rect(4, 44, self.player_number_x - 30, self.player_number_y, (0, 0, 0))
-
-            if self.player_number == 2:
-                global player_2_deflection
-                player_2_deflection = ""
-
-                if self.player_number_deflection == "Right":
-                    draw_rect(4, 44, self.player_number_x + 30, self.player_number_y, (0, 0, 0))
-                if self.player_number_deflection == "Left":
-                    draw_rect(4, 44, self.player_number_x - 30, self.player_number_y, (0, 0, 0))
-                if self.player_number_deflection == "Up":
-                    draw_rect(4, 44, self.player_number_x, self.player_number_y - 30, (0, 0, 0))
-
-            #when the deflection bar is deleted, assign the relative frame number to 0
+            global player_1_deflection
+            print(player_1_deflection)
+            player_1_deflection = ""
             self.frame = 0
-
+            #this clears out any graphical remains of the deflection bars
+            draw_rect(4, 44, self.player_x + 30, self.player_y, (0, 0, 0))
+            draw_rect(4, 44, self.player_x - 30, self.player_y, (0, 0, 0))
+            draw_rect(44, 4, self.player_x, self.player_y + 30, (0, 0, 0))
         else:
             self.frame += 1
 
 
+class Player2:
+    def __init__(self, player_x, player_y):
+        self.frame = 0
+        self.player_x = player_x
+        self.player_y = player_y
+
+    def check_bar_for_frame(self):
+        if self.frame == 0.25 * FPS:
+            global player_2_deflection
+            player_2_deflection = ""
+            self.frame = 0
+            # this clears out any graphical remains of the deflection bars
+            draw_rect(4, 44, self.player_x + 30, self.player_y, (0, 0, 0))
+            draw_rect(4, 44, self.player_x - 30, self.player_y, (0, 0, 0))
+            draw_rect(4, 44, self.player_x, self.player_y - 30, (0, 0, 0))
+        else:
+            self.frame += 1
+
+class Particles:
+    def __init__(self):
+        self.list = []
+    def spawn_particle(self):
+        #I think this should append a new particle to the list in the outer class, but it doesn't appear to be working
+        #When it works, I should be able to reference each of the particles by their index in the list found in the outer class, rather than having to reference each by a unique name
+        #I could also try using a dictionary instead, but I think this is better since I'll be able to iterate through the list with a for loop using simple integer iteration
+        self.list.append(Particle(1, 1, 1, 1))
+
+    class Particle:
+        def __init__(self, pos_x, pos_y, vel_x, vel_y, radius):
+            self.pos_x, self.pos_y, self.vel_x, self.vel_y, self.radius = pos_x, pos_y, vel_x, vel_y, radius
+            self.rect = pygame.Rect(pos_x, pos_y, 2 * radius, 2 * radius)
+            self.rect.center = (pos_x, pos_y)
+        def move(self):
+            self.pos_x = self.pos_x + self.vel_x
+            self.pos_y = self.pos_y + self.vel_y
+        def check_collision(self):
+            # put the list for the collideable objects here
+            if self.rect.collidelist()
+
+            #we can just assume that all the surfaces in the game can only be collided with horizontaly or vertically, not both, so this should make things easier.
+
+
+        #create a list to hold all the particles
+particles = []
+
 
 #creating player 1 and 2 objects
-player_1 = Player(1)
-player_2 = Player(2)
+player_1 = Player1(player_1_x, player_1_y)
+player_2 = Player2(player_2_x, player_2_y)
 
 
 
@@ -195,14 +220,14 @@ while running:
                 if event.key == pygame.K_UP:
                     #select 2 player
                     draw_image(Menu_Select_Arrow, 300, 275, True)
-                    draw_rect(50, 50, 275, 350, (0,0,0))
+                    draw_rect(50, 50, 300, 375, (0,0,0))
                     Menu_Select_Sound.play()
                     game_mode = 1
                     print(game_mode)
                 if event.key == pygame.K_DOWN:
                     #select 1 player
                     draw_image(Menu_Select_Arrow, 300, 375, True)
-                    draw_rect(50, 50, 275, 250, (0, 0, 0))
+                    draw_rect(50, 50, 300, 275, (0, 0, 0))
                     Menu_Select_Sound.play()
                     game_mode = 2
                     print(game_mode)
@@ -275,6 +300,8 @@ while running:
                         player_1_deflection = player_1_direction
 
         player_1.check_bar_for_frame()
+
+
 
 
 
