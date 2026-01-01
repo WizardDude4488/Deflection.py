@@ -116,8 +116,10 @@ collideable_list = [player_1_rect, player_1_left_rect, player_1_right_rect, play
                     player_2_rect, player_2_left_rect, player_2_right_rect, player_2_up_rect,
                     wall_left_rect, wall_top_rect, wall_bottom_rect, wall_right_rect]
 
+#player life values
 
-
+player_1_dead = False
+player_2_dead = False
 
 #classes for player functions like checking whether a deflection bar should be displaying on a certain frame
 
@@ -171,8 +173,33 @@ class Particles:
             self.pos_y = self.pos_y + self.vel_y
         def check_collision(self):
             #put the list for the collideable objects here
-            if self.rect.collidelist(collideable_list):
-                if
+            match self.rect.collidelist(collideable_list):
+                case 0:
+                    global player_1_dead
+                    player_1_dead = True
+                case 1:
+                    global player_1_deflection
+                    if player_1_deflection == "Left":
+                        #flip x-velocity
+                        self.vel_x = -self.vel_x
+                case 2:
+                    global player_1_deflection
+                    if player_1_deflection == "Right":
+                        # flip x-velocity
+                        self.vel_x = -self.vel_x
+                case 3:
+                    global player_1_deflection
+                    if player_1_deflection == "Down":
+                        # flip y-velocity
+                        self.vel_y = -self.vel_y
+                case 8:
+                    self.vel_x = -self.vel_x
+                case 9:
+                    self.vel_y = -self.vel_y
+                case 10:
+                    self.vel_y = -self.vel_y
+                case 11:
+                    self.vel_x = -self.vel_x
 
     def __init__(self):
         self.list = []
@@ -183,6 +210,11 @@ class Particles:
         particle = self.Particle(screen_width / 2, screen_height / 2, 0, -1, 1)
         self.list.append(particle)
     def check_list(self):
+        for i in self.list:
+            #check collisions for item in list, then move the item using the move() method
+            #this is intended to be called every frame
+            i.check_collision()
+            i.move()
 
 
 
@@ -341,12 +373,15 @@ while running:
                 if event.key == pygame.K_f:
                     if player_1_direction == "Left":
                         draw_image(Vertical_Deflect_Bar, player_1_x - 30, player_1_y, True)
+                        global player_1_deflection
                         player_1_deflection = player_1_direction
                     if player_1_direction == "Down":
                         draw_image(Horizontal_Deflect_Bar, player_1_x, player_1_y + 30, True)
+                        global player_1_deflection
                         player_1_deflection = player_1_direction
                     if player_1_direction == "Right":
                         draw_image(Vertical_Deflect_Bar, player_1_x + 30, player_1_y, True)
+                        global player_1_deflection
                         player_1_deflection = player_1_direction
 
         player_1.check_bar_for_frame()
