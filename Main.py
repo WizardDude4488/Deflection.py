@@ -175,10 +175,10 @@ class Particles:
             #draw over the previous position with black
             draw_with_rect(self.rect, (0,0,0))
             #update position based on velocity
-            if self.vel_x < 2 or self.vel_x < -2:
+            if self.vel_x < 1 or self.vel_x < -1:
                 self.vel_x = self.vel_x + random.randint(-1, 1)
-            if self.vel_y < 2 or self.vel_y < -2:
-                self.vel_y + random.randint(-1, 1)
+            if self.vel_y < 1 or self.vel_y < -1:
+                self.vel_y = self.vel_y + random.randint(-1, 1)
             self.pos_x = self.pos_x + self.vel_x
             self.pos_y = self.pos_y + self.vel_y
             #update rect
@@ -237,7 +237,7 @@ class Particles:
 
     def check_list(self):
         index = 0
-        while index < len(self.list):
+        while index < 15:
             #check collisions for item in list, then move the item using the move() method
             #this is intended to be called every frame
             #self.list[i] accesses the object at that index
