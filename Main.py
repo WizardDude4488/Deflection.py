@@ -103,13 +103,13 @@ player_2_right_rect = pygame.Rect(player_2_x + 30, player_2_y, 4, 44)
 player_2_right_rect.center = (player_2_x + 30, player_2_y)
 
 #walls
-wall_left_rect = pygame.Rect(0, screen_height / 2, 2, screen_height)
+wall_left_rect = pygame.Rect(1, screen_height / 2, 5, screen_height)
 wall_left_rect.center = (0, screen_height / 2)
-wall_top_rect = pygame.Rect(screen_width / 2, 1, screen_width, 3)
+wall_top_rect = pygame.Rect(screen_width / 2, 1, screen_width, 5)
 wall_top_rect.center = (screen_width / 2, 1)
-wall_bottom_rect = pygame.Rect(screen_width / 2, screen_height - 1, screen_width, 3)
+wall_bottom_rect = pygame.Rect(screen_width / 2, screen_height - 1, screen_width, 5)
 wall_bottom_rect.center = (screen_width / 2, screen_height - 1)
-wall_right_rect = pygame.Rect(screen_width - 1, screen_height / 2, 3, screen_height)
+wall_right_rect = pygame.Rect(screen_width - 1, screen_height / 2, 5, screen_height)
 wall_right_rect.center = (screen_width - 1, screen_height / 2)
 
 collideable_list = [player_1_rect, player_1_left_rect, player_1_right_rect, player_1_down_rect,
@@ -150,7 +150,7 @@ class Player2:
         self.player_y = player_y
 
     def check_bar_for_frame(self):
-        if self.frame == 0.25 * FPS:
+        if self.frame == 0.4 * FPS:
             global player_2_deflection
             player_2_deflection = ""
             self.frame = 0
@@ -168,31 +168,46 @@ class Particles:
             self.pos_x, self.pos_y, self.vel_x, self.vel_y, self.radius = pos_x, pos_y, vel_x, vel_y, radius
             self.rect = pygame.Rect(pos_x, pos_y, 2 * radius, 2 * radius)
             self.rect.center = (pos_x, pos_y)
+            self.delete = False
+            pygame.draw.circle(screen, (1,1,1), (self.pos_x, self.pos_y), self.radius)
+            pygame.display.update(self.rect)
         def move(self):
+            #draw over the previous position with black
+            draw_with_rect(self.rect, (0,0,0))
+            #update position based on velocity
+            if self.vel_x < 5:
+                self.vel_x = self.vel_x + random.randint(-1, 1)
+            if self.vel_y < 5:
+                self.vel_y + random.randint(-1, 1)
             self.pos_x = self.pos_x + self.vel_x
             self.pos_y = self.pos_y + self.vel_y
+            #update rect
+            self.rect = pygame.Rect(self.pos_x, self.pos_y, 2 * self.radius, 2 * self.radius)
+            #draw new circle and update the rectangle containing that circle
+            draw_with_rect(self.rect, (0, 40, 100))
+            pygame.display.update(self.rect)
         def check_collision(self):
+            global player_1_deflection
             #put the list for the collideable objects here
             match self.rect.collidelist(collideable_list):
                 case 0:
                     global player_1_dead
                     player_1_dead = True
+                    print("Player 1 Dead:", player_1_dead)
                 case 1:
-                    global player_1_deflection
                     if player_1_deflection == "Left":
                         #flip x-velocity
                         self.vel_x = -self.vel_x
                 case 2:
-                    global player_1_deflection
                     if player_1_deflection == "Right":
-                        # flip x-velocity
+                        #flip x-velocity
                         self.vel_x = -self.vel_x
                 case 3:
-                    global player_1_deflection
                     if player_1_deflection == "Down":
                         # flip y-velocity
                         self.vel_y = -self.vel_y
                 case 8:
+                    self.pos_x = self.pos_x
                     self.vel_x = -self.vel_x
                 case 9:
                     self.vel_y = -self.vel_y
@@ -201,30 +216,41 @@ class Particles:
                 case 11:
                     self.vel_x = -self.vel_x
 
+            #deletes the particle if it goes out of bounds
+            if self.rect.x == 0 | self.rect.y == 0 | self.rect.x == screen_width | self.rect.y == screen_height:
+                self.delete = True
+
     def __init__(self):
         self.list = []
+        self.frame = 0
     def spawn_particle(self):
         #I think this should append a new particle to the list in the outer class, but it doesn't appear to be working
         #When it works, I should be able to reference each of the particles by their index in the list found in the outer class, rather than having to reference each by a unique name
         #I could also try using a dictionary instead, but I think this is better since I'll be able to iterate through the list with a for loop using simple integer iteration
-        particle = self.Particle(screen_width / 2, screen_height / 2, 0, -1, 1)
-        self.list.append(particle)
+        if self.frame == 120:
+            particle = Particles.Particle(screen_width / 2, screen_height / 2, 2, -1, 5)
+            if len(self.list) < 15:
+                self.list.append(particle)
+            self.frame = 0
+        else:
+            self.frame += 1
+
     def check_list(self):
         for i in self.list:
             #check collisions for item in list, then move the item using the move() method
             #this is intended to be called every frame
             i.check_collision()
+            if i.delete:
+                self.list.pop(i)
             i.move()
-
 
 
 
             #we can just assume that all the surfaces in the game can only be collided with horizontaly or vertically, not both, so this should make things easier.
 
 
-
-        #create a list to hold all the particles
-particles = []
+#create an object of the Particles class
+particlesObj = Particles()
 
 
 #creating player 1 and 2 objects
@@ -318,7 +344,7 @@ while running:
 
     if game_mode == 1 and waiting and running:
         screen.fill((0,0,0))
-        draw_text("Player 1: AWD for directions, G to deflect.", text_font, (5, 21, 214), screen_width / 2, screen_height / 2)
+        draw_text("Player 1: AWD for directions, F to deflect.", text_font, (5, 21, 214), screen_width / 2, screen_height / 2)
         pygame.display.flip()
         Menu_Select_Sound.play()
         print("play")
@@ -327,7 +353,7 @@ while running:
         pygame.time.delay(3000)
     if game_mode == 2 and waiting and running:
         screen.fill((0, 0, 0))
-        draw_text("Player 1: WSD for directions, G to deflect.", text_font, (5, 21, 214), screen_width / 2, screen_height / 2 - 50)
+        draw_text("Player 1: WSD for directions, F to deflect.", text_font, (5, 21, 214), screen_width / 2, screen_height / 2 - 50)
         draw_text("Player 2: Arrows for directions, ctrl to deflect.", text_font, (5, 21, 214), screen_width / 2, screen_height / 2 + 50)
         pygame.display.flip()
         Menu_Select_Sound.play()
@@ -358,37 +384,44 @@ while running:
                 if event.key == pygame.K_a:
                     #turn player one to the left
                     print("Left")
-                    draw_image(Small_Arrow_Left, player_1_x, player_1_y, True)
                     player_1_direction = "Left"
                 if event.key == pygame.K_s:
                     #turn player one down
                     print("Down")
-                    draw_image(Small_Arrow_Down, player_1_x, player_1_y, True)
                     player_1_direction = "Down"
                 if event.key == pygame.K_d:
                     #turn player to the right
                     print("Right")
-                    draw_image(Small_Arrow_Right, player_1_x, player_1_y, True)
                     player_1_direction = "Right"
                 if event.key == pygame.K_f:
                     if player_1_direction == "Left":
                         draw_image(Vertical_Deflect_Bar, player_1_x - 30, player_1_y, True)
-                        global player_1_deflection
                         player_1_deflection = player_1_direction
                     if player_1_direction == "Down":
                         draw_image(Horizontal_Deflect_Bar, player_1_x, player_1_y + 30, True)
-                        global player_1_deflection
                         player_1_deflection = player_1_direction
                     if player_1_direction == "Right":
                         draw_image(Vertical_Deflect_Bar, player_1_x + 30, player_1_y, True)
-                        global player_1_deflection
                         player_1_deflection = player_1_direction
+
+        match player_1_direction:
+            case "Left":
+                draw_image(Small_Arrow_Left, player_1_x, player_1_y, True)
+            case "Right":
+                draw_image(Small_Arrow_Right, player_1_x, player_1_y, True)
+            case "Down":
+                draw_image(Small_Arrow_Down, player_1_x, player_1_y, True)
+            case _:
+                draw_image(Small_Arrow_Down, player_1_x, player_1_y, True)
 
         player_1.check_bar_for_frame()
         draw_with_rect(wall_left_rect, (0, 50, 0))
         draw_with_rect(wall_top_rect, (0, 50, 0))
         draw_with_rect(wall_bottom_rect, (0, 50, 0))
         draw_with_rect(wall_right_rect, (0, 50, 0))
+
+        particlesObj.spawn_particle()
+        particlesObj.check_list()
 
 
                 #need a function or method to display the deflection bar for a certain number of frames
