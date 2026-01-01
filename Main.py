@@ -175,9 +175,9 @@ class Particles:
             #draw over the previous position with black
             draw_with_rect(self.rect, (0,0,0))
             #update position based on velocity
-            if self.vel_x < 5:
+            if self.vel_x < 2 or self.vel_x < -2:
                 self.vel_x = self.vel_x + random.randint(-1, 1)
-            if self.vel_y < 5:
+            if self.vel_y < 2 or self.vel_y < -2:
                 self.vel_y + random.randint(-1, 1)
             self.pos_x = self.pos_x + self.vel_x
             self.pos_y = self.pos_y + self.vel_y
@@ -217,7 +217,7 @@ class Particles:
                     self.vel_x = -self.vel_x
 
             #deletes the particle if it goes out of bounds
-            if self.rect.x == 0 | self.rect.y == 0 | self.rect.x == screen_width | self.rect.y == screen_height:
+            if self.rect.x == 0 or self.rect.y == 0 or self.rect.x == screen_width or self.rect.y == screen_height:
                 self.delete = True
 
     def __init__(self):
@@ -236,13 +236,19 @@ class Particles:
             self.frame += 1
 
     def check_list(self):
-        for i in self.list:
+        index = 0
+        while index < len(self.list):
             #check collisions for item in list, then move the item using the move() method
             #this is intended to be called every frame
-            i.check_collision()
-            if i.delete:
-                self.list.pop(i)
-            i.move()
+            #self.list[i] accesses the object at that index
+            #need to access the index in the list in the for loop rather than the object, because pop() only works on items in a list, not objects
+
+            self.list[index].check_collision()
+            if self.list[index].delete:
+                self.list.pop(index)
+            self.list[index].move()
+            index += 1
+
 
 
 
