@@ -56,9 +56,14 @@ def draw_image(image, x, y, update):
 
 #helper function for filling a rect with a color
 #updates the area of the screen filled by the rect
+#change these helper functions so that they are x, y, width, height, like the pygame built in methods
 def draw_rect(width, height, x, y, color):
     rect = pygame.Rect(x, y, width, height)
     rect.center = (x, y)
+    pygame.draw.rect(screen, color, rect)
+    pygame.display.update(rect)
+
+def draw_with_rect(rect, color):
     pygame.draw.rect(screen, color, rect)
     pygame.display.update(rect)
 
@@ -75,6 +80,44 @@ player_1_y = 20
 
 player_2_x = screen_width / 2
 player_2_y = screen_height - 20
+
+#creating the rects for the different objects in the game that the particles can collide with
+#player 1
+player_1_rect = pygame.Rect(player_1_x, player_1_y, 50, 50)
+player_1_rect.center = (player_1_x, player_1_y)
+player_1_left_rect = pygame.Rect(player_1_x - 30, player_1_y, 4, 44)
+player_1_left_rect.center = (player_1_x - 30, player_1_y)
+player_1_down_rect = pygame.Rect(player_1_x, player_1_y + 30, 44, 4)
+player_1_down_rect.center = (player_1_x, player_1_y + 30)
+player_1_right_rect = pygame.Rect(player_1_x + 30, player_1_y, 4, 44)
+player_1_right_rect.center = (player_1_x + 30, player_1_y)
+
+#player 2
+player_2_rect = pygame.Rect(player_2_x, player_2_y, 50, 50)
+player_2_rect.center = (player_2_x, player_2_y)
+player_2_left_rect = pygame.Rect(player_2_x - 30, player_2_y, 4, 44)
+player_2_left_rect.center = (player_2_x - 30, player_2_y)
+player_2_up_rect = pygame.Rect(player_2_x, player_2_y - 30, 44, 4)
+player_2_up_rect.center = (player_2_x, player_2_y - 30)
+player_2_right_rect = pygame.Rect(player_2_x + 30, player_2_y, 4, 44)
+player_2_right_rect.center = (player_2_x + 30, player_2_y)
+
+#walls
+wall_left_rect = pygame.Rect(0, screen_height / 2, 2, screen_height)
+wall_left_rect.center = (0, screen_height / 2)
+wall_top_rect = pygame.Rect(screen_width / 2, 1, screen_width, 3)
+wall_top_rect.center = (screen_width / 2, 1)
+wall_bottom_rect = pygame.Rect(screen_width / 2, screen_height - 1, screen_width, 3)
+wall_bottom_rect.center = (screen_width / 2, screen_height - 1)
+wall_right_rect = pygame.Rect(screen_width - 1, screen_height / 2, 3, screen_height)
+wall_right_rect.center = (screen_width - 1, screen_height / 2)
+
+collideable_list = [player_1_rect, player_1_left_rect, player_1_right_rect, player_1_down_rect,
+                    player_2_rect, player_2_left_rect, player_2_right_rect, player_2_up_rect,
+                    wall_left_rect, wall_top_rect, wall_bottom_rect, wall_right_rect]
+
+
+
 
 #classes for player functions like checking whether a deflection bar should be displaying on a certain frame
 
@@ -116,6 +159,7 @@ class Player2:
         else:
             self.frame += 1
 
+#class for managing the list of particles
 class Particles:
     class Particle:
         def __init__(self, pos_x, pos_y, vel_x, vel_y, radius):
@@ -126,8 +170,9 @@ class Particles:
             self.pos_x = self.pos_x + self.vel_x
             self.pos_y = self.pos_y + self.vel_y
         def check_collision(self):
-            # put the list for the collideable objects here
-            if self.rect.collidelist()
+            #put the list for the collideable objects here
+            if self.rect.collidelist(collideable_list):
+                if
 
     def __init__(self):
         self.list = []
@@ -137,6 +182,8 @@ class Particles:
         #I could also try using a dictionary instead, but I think this is better since I'll be able to iterate through the list with a for loop using simple integer iteration
         particle = self.Particle(screen_width / 2, screen_height / 2, 0, -1, 1)
         self.list.append(particle)
+    def check_list(self):
+
 
 
 
@@ -303,9 +350,10 @@ while running:
                         player_1_deflection = player_1_direction
 
         player_1.check_bar_for_frame()
-
-
-
+        draw_with_rect(wall_left_rect, (0, 50, 0))
+        draw_with_rect(wall_top_rect, (0, 50, 0))
+        draw_with_rect(wall_bottom_rect, (0, 50, 0))
+        draw_with_rect(wall_right_rect, (0, 50, 0))
 
 
                 #need a function or method to display the deflection bar for a certain number of frames
