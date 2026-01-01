@@ -82,24 +82,25 @@ player_2_x = screen_width / 2
 player_2_y = screen_height - 20
 
 #creating the rects for the different objects in the game that the particles can collide with
+#added a little bit of buffer so it's more forgiving for the players
 #player 1
 player_1_rect = pygame.Rect(player_1_x, player_1_y, 50, 50)
 player_1_rect.center = (player_1_x, player_1_y)
-player_1_left_rect = pygame.Rect(player_1_x - 30, player_1_y, 4, 44)
+player_1_left_rect = pygame.Rect(player_1_x - 30, player_1_y, 10, 44)
 player_1_left_rect.center = (player_1_x - 30, player_1_y)
-player_1_down_rect = pygame.Rect(player_1_x, player_1_y + 30, 44, 4)
+player_1_down_rect = pygame.Rect(player_1_x, player_1_y + 30, 44, 10)
 player_1_down_rect.center = (player_1_x, player_1_y + 30)
-player_1_right_rect = pygame.Rect(player_1_x + 30, player_1_y, 4, 44)
+player_1_right_rect = pygame.Rect(player_1_x + 30, player_1_y, 10, 44)
 player_1_right_rect.center = (player_1_x + 30, player_1_y)
 
 #player 2
 player_2_rect = pygame.Rect(player_2_x, player_2_y, 50, 50)
 player_2_rect.center = (player_2_x, player_2_y)
-player_2_left_rect = pygame.Rect(player_2_x - 30, player_2_y, 4, 44)
+player_2_left_rect = pygame.Rect(player_2_x - 30, player_2_y, 10, 44)
 player_2_left_rect.center = (player_2_x - 30, player_2_y)
-player_2_up_rect = pygame.Rect(player_2_x, player_2_y - 30, 44, 4)
+player_2_up_rect = pygame.Rect(player_2_x, player_2_y - 30, 44, 10)
 player_2_up_rect.center = (player_2_x, player_2_y - 30)
-player_2_right_rect = pygame.Rect(player_2_x + 30, player_2_y, 4, 44)
+player_2_right_rect = pygame.Rect(player_2_x + 30, player_2_y, 10, 44)
 player_2_right_rect.center = (player_2_x + 30, player_2_y)
 
 #walls
@@ -168,60 +169,92 @@ class Particles:
             self.pos_x, self.pos_y, self.vel_x, self.vel_y, self.radius = pos_x, pos_y, vel_x, vel_y, radius
             self.rect = pygame.Rect(pos_x, pos_y, 2 * radius, 2 * radius)
             self.rect.center = (pos_x, pos_y)
+            self.damaged = False
             self.delete = False
+            self.color = (5, 21, 214)
             pygame.draw.circle(screen, (1,1,1), (self.pos_x, self.pos_y), self.radius)
             pygame.display.update(self.rect)
         def move(self):
             #draw over the previous position with black
             draw_with_rect(self.rect, (0,0,0))
             #update position based on velocity
-            if self.vel_x < 1 or self.vel_x < -1:
-                self.vel_x = self.vel_x + random.randint(-1, 1)
-            if self.vel_y < 1 or self.vel_y < -1:
-                self.vel_y = self.vel_y + random.randint(-1, 1)
             self.pos_x = self.pos_x + self.vel_x
             self.pos_y = self.pos_y + self.vel_y
             #update rect
             self.rect = pygame.Rect(self.pos_x, self.pos_y, 2 * self.radius, 2 * self.radius)
-            #draw new circle and update the rectangle containing that circle
-            draw_with_rect(self.rect, (0, 40, 100))
+            #draw new rectangle and update the area of its rect
+            draw_with_rect(self.rect, self.color)
             pygame.display.update(self.rect)
         def check_collision(self):
             global player_1_deflection
-            #put the list for the collideable objects here
-            match self.rect.collidelist(collideable_list):
-                case 0:
-                    global player_1_dead
-                    player_1_dead = True
-                    print("Player 1 Dead:", player_1_dead)
-                case 1:
-                    if player_1_deflection == "Left":
-                        #flip x-velocity
-                        self.vel_x = -self.vel_x
-                case 2:
-                    if player_1_deflection == "Right":
-                        #flip x-velocity
-                        self.vel_x = -self.vel_x
-                case 3:
-                    if player_1_deflection == "Down":
-                        # flip y-velocity
-                        self.vel_y = -self.vel_y
-                case 8:
-                    self.pos_x = self.pos_x + 5
-                    self.vel_x = -self.vel_x
-                case 9:
-                    self.pos_y = self.pos_y + 5
-                    self.vel_y = -self.vel_y
-                case 10:
-                    self.pos_y = self.pos_y - 5
-                    self.vel_y = -self.vel_y
-                case 11:
-                    self.pos_x = self.pos_x - 5
-                    self.vel_x = -self.vel_x
-
-            #deletes the particle if it goes out of bounds
-            if self.rect.x == 0 or self.rect.y == 0 or self.rect.x == screen_width or self.rect.y == screen_height:
+            #check if particle is out of bounds, if so, delete
+            if self.rect.x == 0 - 1 or self.rect.y == 0 - 1 or self.rect.x == screen_width + 1 or self.rect.y == screen_height + 1:
                 self.delete = True
+                del self
+
+            #no need to check for collisions if the particle is already deleted
+            if not self.delete:
+                #put the list for the collideable objects here
+                match self.rect.collidelist(collideable_list):
+                    case 0:
+                        global player_1_dead
+                        player_1_dead = True
+                        print("Player 1 Dead:", player_1_dead)
+                        #if the game doesn't stop because of the player death, a new particle won't be spawned to take this particles place because the specific particle that killed the player can possibly pass through the bound of the map and be in the player's rect at the same time, which leads to the particle not being despawned
+                        #maybe add another if statement just for deleting particles that are out of bounds, but add it before the switch case statement so the particle isn't deleted before it can be checked for collision
+                    case 1:
+                        if player_1_deflection == "Left":
+                            #flip x-velocity
+                            self.vel_x = -self.vel_x
+                            if self.damaged:
+                                #I think this might cause issues because this would create an empty indice in the particles list which the check_list function in the outer class would try to use its respective .move() etc methods on which is incorrect and would produce an error since there is no longer an object in that list indice
+                                #Could solve this by having a while loop that removes any empty entries from the list before checking for collisions and moving, which would prevent any other possible problems of this type as well
+                                self.delete = True
+                                del self
+                            else:
+                                y = list(self.color)
+                                #make the particle red to represent it being damaged
+                                #convert tuple to list, modify list element, then convert to tuple. Thanks python!
+                                y[0] = y[0] + 200
+                                self.color = tuple(y)
+                                self.damaged = True
+                    case 2:
+                        if player_1_deflection == "Right":
+                            #flip x-velocity
+                            self.vel_x = -self.vel_x
+                            if self.damaged:
+                                self.delete = True
+                                del self
+                            else:
+                                y = list(self.color)
+                                y[0] = y[0] + 200
+                                self.color = tuple(y)
+                                self.damaged = True
+                    case 3:
+                        if player_1_deflection == "Down":
+                            # flip y-velocity
+                            self.vel_y = -self.vel_y
+                            if self.damaged:
+                                self.delete = True
+                                del self
+                            else:
+                                y = list(self.color)
+                                y[0] = y[0] + 200
+                                self.color = tuple(y)
+                                self.damaged = True
+                    case 8:
+                        #random numbers create varying particle paths for better gameplay
+                        self.pos_x = self.pos_x + random.randint(3,7)
+                        self.vel_x = -self.vel_x
+                    case 9:
+                        self.pos_y = self.pos_y + random.randint(3,7)
+                        self.vel_y = -self.vel_y
+                    case 10:
+                        self.pos_y = self.pos_y - random.randint(3,7)
+                        self.vel_y = -self.vel_y
+                    case 11:
+                        self.pos_x = self.pos_x - random.randint(3,7)
+                        self.vel_x = -self.vel_x
 
     def __init__(self):
         self.list = []
@@ -232,7 +265,7 @@ class Particles:
         #I could also try using a dictionary instead, but I think this is better since I'll be able to iterate through the list with a for loop using simple integer iteration
         if self.frame == 120:
             particle = Particles.Particle(screen_width / 2, screen_height / 2, 2, -1, 5)
-            if len(self.list) < 15:
+            if len(self.list) < 7:
                 self.list.append(particle)
             self.frame = 0
         else:
@@ -245,11 +278,13 @@ class Particles:
             #this is intended to be called every frame
             #self.list[i] accesses the object at that index
             #need to access the index in the list in the for loop rather than the object, because pop() only works on items in a list, not objects
-
             self.list[index].check_collision()
 
             #this prevents the code from deleting an item from the list then trying to use .move() on the deleted indice, which would no longer exist
             if self.list[index].delete:
+                # draw another black rectangle over the position to prevent uncleared rectangles from remaining at the locations where the particles got removed from the list for being out of bounds
+                draw_with_rect(self.list[index].rect, (0, 0, 0))
+                pygame.display.update(self.list[index].rect)
                 del self.list[index]
             else:
                 self.list[index].move()
