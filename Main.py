@@ -207,13 +207,16 @@ class Particles:
                         # flip y-velocity
                         self.vel_y = -self.vel_y
                 case 8:
-                    self.pos_x = self.pos_x
+                    self.pos_x = self.pos_x + 5
                     self.vel_x = -self.vel_x
                 case 9:
+                    self.pos_y = self.pos_y + 5
                     self.vel_y = -self.vel_y
                 case 10:
+                    self.pos_y = self.pos_y - 5
                     self.vel_y = -self.vel_y
                 case 11:
+                    self.pos_x = self.pos_x - 5
                     self.vel_x = -self.vel_x
 
             #deletes the particle if it goes out of bounds
@@ -237,16 +240,19 @@ class Particles:
 
     def check_list(self):
         index = 0
-        while index < 15:
+        while index < len(self.list):
             #check collisions for item in list, then move the item using the move() method
             #this is intended to be called every frame
             #self.list[i] accesses the object at that index
             #need to access the index in the list in the for loop rather than the object, because pop() only works on items in a list, not objects
 
             self.list[index].check_collision()
+
+            #this prevents the code from deleting an item from the list then trying to use .move() on the deleted indice, which would no longer exist
             if self.list[index].delete:
-                self.list.pop(index)
-            self.list[index].move()
+                del self.list[index]
+            else:
+                self.list[index].move()
             index += 1
 
 
