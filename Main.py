@@ -75,14 +75,15 @@ player_2_deflection = ""
 
 #globals for player 1 and 2 x and y positions
 #make sure to create player objects after variable declaration so interpreter knows what value to assign for the new object's parameters
-player_1_x = screen_width / 2
+player_1_x = screen_width // 2
 player_1_y = 25
 
-player_2_x = screen_width / 2
-player_2_y = screen_height - 20
+player_2_x = screen_width // 2
+player_2_y = screen_height - 25
 
 #creating the rects for the different objects in the game that the particles can collide with
 #added a little bit of buffer so it's more forgiving for the players
+#used floor division to make sure all values are of type integer, not floats
 #player 1
 player_1_rect = pygame.Rect(player_1_x, player_1_y, 50, 50)
 player_1_rect.center = (player_1_x, player_1_y)
@@ -104,14 +105,14 @@ player_2_right_rect = pygame.Rect(player_2_x + 30, player_2_y, 10, 44)
 player_2_right_rect.center = (player_2_x + 30, player_2_y)
 
 #walls
-wall_left_rect = pygame.Rect(1, screen_height / 2, 5, screen_height)
-wall_left_rect.center = (0, screen_height / 2)
-wall_top_rect = pygame.Rect(screen_width / 2, 1, screen_width, 5)
-wall_top_rect.center = (screen_width / 2, 1)
-wall_bottom_rect = pygame.Rect(screen_width / 2, screen_height - 1, screen_width, 5)
-wall_bottom_rect.center = (screen_width / 2, screen_height - 1)
-wall_right_rect = pygame.Rect(screen_width - 1, screen_height / 2, 5, screen_height)
-wall_right_rect.center = (screen_width - 1, screen_height / 2)
+wall_left_rect = pygame.Rect(3, screen_height // 2, 5, screen_height)
+wall_left_rect.center = (3, screen_height // 2)
+wall_top_rect = pygame.Rect(screen_width // 2, 3, screen_width, 5)
+wall_top_rect.center = (screen_width // 2, 3)
+wall_bottom_rect = pygame.Rect(screen_width // 2, screen_height - 3, screen_width, 5)
+wall_bottom_rect.center = (screen_width // 2, screen_height - 3)
+wall_right_rect = pygame.Rect(screen_width - 3, screen_height // 2, 5, screen_height)
+wall_right_rect.center = (screen_width - 3, screen_height // 2)
 
 collideable_list = [player_1_rect, player_1_left_rect, player_1_right_rect, player_1_down_rect,
                     player_2_rect, player_2_left_rect, player_2_right_rect, player_2_up_rect,
@@ -151,7 +152,7 @@ class Player2:
         self.player_y = player_y
 
     def check_bar_for_frame(self):
-        if self.frame == FPS:
+        if self.frame == 0.4 * FPS:
             global player_2_deflection
             player_2_deflection = ""
             self.frame = 0
@@ -181,6 +182,7 @@ class Particles:
             self.pos_x = self.pos_x + self.vel_x
             self.pos_y = self.pos_y + self.vel_y
             #update rect
+            #
             self.rect = pygame.Rect(self.pos_x, self.pos_y, 2 * self.radius, 2 * self.radius)
             #draw new rectangle and update the area of its rect
             draw_with_rect(self.rect, self.color)
@@ -236,6 +238,47 @@ class Particles:
                             y[0] = y[0] + 200
                             self.color = tuple(y)
                             self.damaged = True
+                case 4:
+                    global player_2_dead
+                    player_2_dead = True
+                    print("Player 2 Dead:", player_2_dead)
+                    self.delete = True
+                case 5:
+                    if player_2_deflection == "Left":
+                        # flip x-velocity
+                        self.pos_x = self.pos_x - random.randint(5, 8)
+                        self.vel_x = -self.vel_x
+                        if self.damaged:
+                            self.delete = True
+                        else:
+                            y = list(self.color)
+                            y[0] = y[0] + 200
+                            self.color = tuple(y)
+                            self.damaged = True
+                case 6:
+                    if player_2_deflection == "Right":
+                        #flip x-velocity
+                        self.pos_x = self.pos_x + random.randint(5, 8)
+                        self.vel_x = -self.vel_x
+                        if self.damaged:
+                            self.delete = True
+                        else:
+                            y = list(self.color)
+                            y[0] = y[0] + 200
+                            self.color = tuple(y)
+                            self.damaged = True
+                case 7:
+                    if player_2_deflection == "Up":
+                        # flip y-velocity
+                        self.pos_y = self.pos_y - random.randint(5, 8)
+                        self.vel_y = -self.vel_y
+                        if self.damaged:
+                            self.delete = True
+                        else:
+                            y = list(self.color)
+                            y[0] = y[0] + 200
+                            self.color = tuple(y)
+                            self.damaged = True
                 case 8:
                     # random numbers create varying particle paths for better gameplay
                     self.pos_x = self.pos_x + random.randint(3, 7)
@@ -251,7 +294,7 @@ class Particles:
                     self.vel_x = -self.vel_x
 
             # check if particle is out of bounds, if so, delete
-            if self.rect.x == 0 - 1 or self.rect.y == 0 - 1 or self.rect.x == screen_width + 1 or self.rect.y == screen_height + 1:
+            if self.rect.x == 0 + 1 or self.rect.y == 0 + 1 or self.rect.x == screen_width - 1 or self.rect.y == screen_height - 1:
                 self.delete = True
 
             # deletion statement at end so code doesn't try to reference itself when it doesn't exist
@@ -486,7 +529,102 @@ while running:
                         #each frame, the game will iterate through the while loop, and check to see if the current frame is equal to the targeted frame
                         #if so, it will clear the image and assign a value of false to a global variable for whether the player is blocking on that side
                         #if not, it will not return any value
-        #case 2: (2 player mode)
+        case 2: #2 player mode)
+            while playing:
+                # limit to 120 FPS
+                clock.tick(FPS)
+
+                #draw the walls
+                draw_with_rect(wall_left_rect, (0, 50, 0))
+                draw_with_rect(wall_top_rect, (0, 50, 0))
+                draw_with_rect(wall_bottom_rect, (0, 50, 0))
+                draw_with_rect(wall_right_rect, (0, 50, 0))
+
+                # user input for directions
+                for event in pygame.event.get():
+                    if event.type == pygame.QUIT:
+                        running = False
+                        start = False
+                        player_select = False
+                        playing = False
+                    if event.type == pygame.KEYDOWN:
+                        if event.key == pygame.K_a:
+                            # turn player one to the left
+                            print("Left")
+                            player_1_direction = "Left"
+                        if event.key == pygame.K_s:
+                            # turn player one down
+                            print("Down")
+                            player_1_direction = "Down"
+                        if event.key == pygame.K_d:
+                            # turn player to the right
+                            print("Right")
+                            player_1_direction = "Right"
+                        if event.key == pygame.K_f:
+                            # direction is always going to be some value since it doesn't get reset
+                            # Use deflection instead since that gets cleared by check_bar_for_frame()
+                            if player_1_deflection == "":
+                                if player_1_direction == "Left":
+                                    draw_image(Vertical_Deflect_Bar, player_1_x - 30, player_1_y, True)
+                                    player_1_deflection = player_1_direction
+                                if player_1_direction == "Down":
+                                    draw_image(Horizontal_Deflect_Bar, player_1_x, player_1_y + 30, True)
+                                    player_1_deflection = player_1_direction
+                                if player_1_direction == "Right":
+                                    draw_image(Vertical_Deflect_Bar, player_1_x + 30, player_1_y, True)
+                                    player_1_deflection = player_1_direction
+                        if event.key == pygame.K_LEFT:
+                            # turn player one to the left
+                            print("Left")
+                            player_2_direction = "Left"
+                        if event.key == pygame.K_UP:
+                            # turn player one down
+                            print("Up")
+                            player_2_direction = "Up"
+                        if event.key == pygame.K_RIGHT:
+                            # turn player to the right
+                            print("Right")
+                            player_2_direction = "Right"
+                        #right control for player 2
+                        if event.key == pygame.K_RCTRL:
+                            # direction is always going to be some value since it doesn't get reset
+                            # Use deflection instead since that gets cleared by check_bar_for_frame()
+                            if player_2_deflection == "":
+                                if player_2_direction == "Left":
+                                    draw_image(Vertical_Deflect_Bar, player_2_x - 30, player_2_y, True)
+                                    player_2_deflection = player_2_direction
+                                if player_2_direction == "Up":
+                                    draw_image(Horizontal_Deflect_Bar, player_2_x, player_2_y - 30, True)
+                                    player_2_deflection = player_2_direction
+                                if player_2_direction == "Right":
+                                    draw_image(Vertical_Deflect_Bar, player_2_x + 30, player_2_y, True)
+                                    player_2_deflection = player_2_direction
+
+                match player_1_direction:
+                    case "Left":
+                        draw_image(Small_Arrow_Left, player_1_x, player_1_y, True)
+                    case "Right":
+                        draw_image(Small_Arrow_Right, player_1_x, player_1_y, True)
+                    case "Down":
+                        draw_image(Small_Arrow_Down, player_1_x, player_1_y, True)
+                    case _:
+                        draw_image(Small_Arrow_Down, player_1_x, player_1_y, True)
+
+                match player_2_direction:
+                    case "Left":
+                        draw_image(Small_Arrow_Left, player_2_x, player_2_y, True)
+                    case "Right":
+                        draw_image(Small_Arrow_Right, player_2_x, player_2_y, True)
+                    case "Up":
+                        draw_image(Small_Arrow_Up, player_2_x, player_2_y, True)
+
+                #checking I-frames
+                player_1.check_bar_for_frame()
+                player_2.check_bar_for_frame()
+
+
+                particlesObj.spawn_particle()
+                particlesObj.check_list()
 
 
 
