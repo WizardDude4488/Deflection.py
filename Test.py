@@ -1,9 +1,7 @@
-numbers = [10, 50, 80, 150, -100, -20]
+numbers = {1: 1, 2: 24, 3: 40, 4: 10}
 
-def function(n):
-    return abs(n)
+#a list of tuples can be created sorted by the value of the index 1 element of the tuple
+#the values in the tuples can be accessed by going to numbers_l[i][n] for the nth value of ith tuple
+numbers_l = list(sorted(numbers.items(), key = lambda item: item[1]))
 
-numbers.sort(key = function)
-
-for i in numbers:
-    print(i)
+print(numbers_l)
