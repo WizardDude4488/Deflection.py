@@ -193,11 +193,13 @@ class Particles:
                     global player_1_dead
                     player_1_dead = True
                     print("Player 1 Dead:", player_1_dead)
+                    self.delete = True
                     # if the game doesn't stop because of the player death, a new particle won't be spawned to take this particles place because the specific particle that killed the player can possibly pass through the bound of the map and be in the player's rect at the same time, which leads to the particle not being despawned
                     # maybe add another if statement just for deleting particles that are out of bounds, but add it before the switch case statement so the particle isn't deleted before it can be checked for collision
                 case 1:
                     if player_1_deflection == "Left":
-                        # flip x-velocity
+                        # flip x-velocity and offset by 5 - 8 pixels
+                        self.pos_x = self.pos_x - random.randint(5, 8)
                         self.vel_x = -self.vel_x
                         if self.damaged:
                             # I think this might cause issues because this would create an empty indice in the particles list which the check_list function in the outer class would try to use its respective .move() etc methods on which is incorrect and would produce an error since there is no longer an object in that list indice
@@ -213,6 +215,7 @@ class Particles:
                 case 2:
                     if player_1_deflection == "Right":
                         # flip x-velocity
+                        self.pos_x = self.pos_x + random.randint(5, 8)
                         self.vel_x = -self.vel_x
                         if self.damaged:
                             self.delete = True
@@ -224,6 +227,7 @@ class Particles:
                 case 3:
                     if player_1_deflection == "Down":
                         # flip y-velocity
+                        self.pos_y = self.pos_y + random.randint(5, 8)
                         self.vel_y = -self.vel_y
                         if self.damaged:
                             self.delete = True
@@ -311,7 +315,7 @@ player_2 = Player2(player_2_x, player_2_y)
 
 #defining variables
 
-#1 = 1 player, 2 = 2 player. This variable is for 1 or 2 player selection.
+#1 = 1 player vs. AI, 2 = 2 player couch multiplayer. This variable is for 1 or 2 player selection.
 game_mode = 0
 
 #game loop
@@ -413,75 +417,76 @@ while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
+    match game_mode:
+        case 1:
+            while playing:
 
-    while playing:
+                #limit to 120 FPS
+                clock.tick(FPS)
 
-        #limit to 120 FPS
-        clock.tick(FPS)
+                #user input for directions
+                for event in pygame.event.get():
+                    if event.type == pygame.QUIT:
+                        running = False
+                        start = False
+                        player_select = False
+                        playing = False
+                    if event.type == pygame.KEYDOWN:
+                        if event.key == pygame.K_a:
+                            #turn player one to the left
+                            print("Left")
+                            player_1_direction = "Left"
+                        if event.key == pygame.K_s:
+                            #turn player one down
+                            print("Down")
+                            player_1_direction = "Down"
+                        if event.key == pygame.K_d:
+                            #turn player to the right
+                            print("Right")
+                            player_1_direction = "Right"
+                        if event.key == pygame.K_f:
+                            #direction is always going to be some value since it doesn't get reset
+                            #Use deflection instead since that gets cleared by check_bar_for_frame()
+                            if player_1_deflection == "":
+                                if player_1_direction == "Left":
+                                    draw_image(Vertical_Deflect_Bar, player_1_x - 30, player_1_y, True)
+                                    player_1_deflection = player_1_direction
+                                if player_1_direction == "Down":
+                                    draw_image(Horizontal_Deflect_Bar, player_1_x, player_1_y + 30, True)
+                                    player_1_deflection = player_1_direction
+                                if player_1_direction == "Right":
+                                    draw_image(Vertical_Deflect_Bar, player_1_x + 30, player_1_y, True)
+                                    player_1_deflection = player_1_direction
 
-        #user input for directions
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                running = False
-                start = False
-                player_select = False
-                playing = False
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_a:
-                    #turn player one to the left
-                    print("Left")
-                    player_1_direction = "Left"
-                if event.key == pygame.K_s:
-                    #turn player one down
-                    print("Down")
-                    player_1_direction = "Down"
-                if event.key == pygame.K_d:
-                    #turn player to the right
-                    print("Right")
-                    player_1_direction = "Right"
-                if event.key == pygame.K_f:
-                    #direction is always going to be some value since it doesn't get reset
-                    #Use deflection instead since that gets cleared by check_bar_for_frame()
-                    if player_1_deflection == "":
-                        if player_1_direction == "Left":
-                            draw_image(Vertical_Deflect_Bar, player_1_x - 30, player_1_y, True)
-                            player_1_deflection = player_1_direction
-                        if player_1_direction == "Down":
-                            draw_image(Horizontal_Deflect_Bar, player_1_x, player_1_y + 30, True)
-                            player_1_deflection = player_1_direction
-                        if player_1_direction == "Right":
-                            draw_image(Vertical_Deflect_Bar, player_1_x + 30, player_1_y, True)
-                            player_1_deflection = player_1_direction
-
-        match player_1_direction:
-            case "Left":
-                draw_image(Small_Arrow_Left, player_1_x, player_1_y, True)
-            case "Right":
-                draw_image(Small_Arrow_Right, player_1_x, player_1_y, True)
-            case "Down":
-                draw_image(Small_Arrow_Down, player_1_x, player_1_y, True)
-            case _:
-                draw_image(Small_Arrow_Down, player_1_x, player_1_y, True)
-
-
-        player_1.check_bar_for_frame()
-        draw_with_rect(wall_left_rect, (0, 50, 0))
-        draw_with_rect(wall_top_rect, (0, 50, 0))
-        draw_with_rect(wall_bottom_rect, (0, 50, 0))
-        draw_with_rect(wall_right_rect, (0, 50, 0))
-
-        particlesObj.spawn_particle()
-        particlesObj.check_list()
+                match player_1_direction:
+                    case "Left":
+                        draw_image(Small_Arrow_Left, player_1_x, player_1_y, True)
+                    case "Right":
+                        draw_image(Small_Arrow_Right, player_1_x, player_1_y, True)
+                    case "Down":
+                        draw_image(Small_Arrow_Down, player_1_x, player_1_y, True)
+                    case _:
+                        draw_image(Small_Arrow_Down, player_1_x, player_1_y, True)
 
 
-                #need a function or method to display the deflection bar for a certain number of frames
-                #method takes in image name, x, y, and number of frames
-                #the method will run until it reaches a targeted frame
-                #the targeted frame will be based on the current frame when the method is first called, plus some number of frames
-                #each frame, the game will iterate through the while loop, and check to see if the current frame is equal to the targeted frame
-                #if so, it will clear the image and assign a value of false to a global variable for whether the player is blocking on that side
-                #if not, it will not return any value
+                player_1.check_bar_for_frame()
+                draw_with_rect(wall_left_rect, (0, 50, 0))
+                draw_with_rect(wall_top_rect, (0, 50, 0))
+                draw_with_rect(wall_bottom_rect, (0, 50, 0))
+                draw_with_rect(wall_right_rect, (0, 50, 0))
 
+                particlesObj.spawn_particle()
+                particlesObj.check_list()
+
+
+                        #need a function or method to display the deflection bar for a certain number of frames
+                        #method takes in image name, x, y, and number of frames
+                        #the method will run until it reaches a targeted frame
+                        #the targeted frame will be based on the current frame when the method is first called, plus some number of frames
+                        #each frame, the game will iterate through the while loop, and check to see if the current frame is equal to the targeted frame
+                        #if so, it will clear the image and assign a value of false to a global variable for whether the player is blocking on that side
+                        #if not, it will not return any value
+        #case 2: (2 player mode)
 
 
 
