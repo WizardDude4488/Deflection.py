@@ -76,7 +76,7 @@ player_2_deflection = ""
 #globals for player 1 and 2 x and y positions
 #make sure to create player objects after variable declaration so interpreter knows what value to assign for the new object's parameters
 player_1_x = screen_width / 2
-player_1_y = 20
+player_1_y = 25
 
 player_2_x = screen_width / 2
 player_2_y = screen_height - 20
@@ -131,7 +131,7 @@ class Player1:
         self.player_y = player_y
 
     def check_bar_for_frame(self):
-        if self.frame == 0.25 * FPS:
+        if self.frame == 0.4 * FPS:
             global player_1_deflection
             print(player_1_deflection)
             player_1_deflection = ""
@@ -151,7 +151,7 @@ class Player2:
         self.player_y = player_y
 
     def check_bar_for_frame(self):
-        if self.frame == 0.4 * FPS:
+        if self.frame == FPS:
             global player_2_deflection
             player_2_deflection = ""
             self.frame = 0
@@ -187,75 +187,72 @@ class Particles:
             pygame.display.update(self.rect)
         def check_collision(self):
             global player_1_deflection
-            #check if particle is out of bounds, if so, delete
+            # put the list for the collideable objects here
+            match self.rect.collidelist(collideable_list):
+                case 0:
+                    global player_1_dead
+                    player_1_dead = True
+                    print("Player 1 Dead:", player_1_dead)
+                    # if the game doesn't stop because of the player death, a new particle won't be spawned to take this particles place because the specific particle that killed the player can possibly pass through the bound of the map and be in the player's rect at the same time, which leads to the particle not being despawned
+                    # maybe add another if statement just for deleting particles that are out of bounds, but add it before the switch case statement so the particle isn't deleted before it can be checked for collision
+                case 1:
+                    if player_1_deflection == "Left":
+                        # flip x-velocity
+                        self.vel_x = -self.vel_x
+                        if self.damaged:
+                            # I think this might cause issues because this would create an empty indice in the particles list which the check_list function in the outer class would try to use its respective .move() etc methods on which is incorrect and would produce an error since there is no longer an object in that list indice
+                            # Could solve this by having a while loop that removes any empty entries from the list before checking for collisions and moving, which would prevent any other possible problems of this type as well
+                            self.delete = True
+                        else:
+                            y = list(self.color)
+                            # make the particle red to represent it being damaged
+                            # convert tuple to list, modify list element, then convert to tuple. Thanks python!
+                            y[0] = y[0] + 200
+                            self.color = tuple(y)
+                            self.damaged = True
+                case 2:
+                    if player_1_deflection == "Right":
+                        # flip x-velocity
+                        self.vel_x = -self.vel_x
+                        if self.damaged:
+                            self.delete = True
+                        else:
+                            y = list(self.color)
+                            y[0] = y[0] + 200
+                            self.color = tuple(y)
+                            self.damaged = True
+                case 3:
+                    if player_1_deflection == "Down":
+                        # flip y-velocity
+                        self.vel_y = -self.vel_y
+                        if self.damaged:
+                            self.delete = True
+                        else:
+                            y = list(self.color)
+                            y[0] = y[0] + 200
+                            self.color = tuple(y)
+                            self.damaged = True
+                case 8:
+                    # random numbers create varying particle paths for better gameplay
+                    self.pos_x = self.pos_x + random.randint(3, 7)
+                    self.vel_x = -self.vel_x
+                case 9:
+                    self.pos_y = self.pos_y + random.randint(3, 7)
+                    self.vel_y = -self.vel_y
+                case 10:
+                    self.pos_y = self.pos_y - random.randint(3, 7)
+                    self.vel_y = -self.vel_y
+                case 11:
+                    self.pos_x = self.pos_x - random.randint(3, 7)
+                    self.vel_x = -self.vel_x
+
+            # check if particle is out of bounds, if so, delete
             if self.rect.x == 0 - 1 or self.rect.y == 0 - 1 or self.rect.x == screen_width + 1 or self.rect.y == screen_height + 1:
                 self.delete = True
+
+            # deletion statement at end so code doesn't try to reference itself when it doesn't exist
+            if self.delete:
                 del self
-
-            #no need to check for collisions if the particle is already deleted
-            if not self.delete:
-                #put the list for the collideable objects here
-                match self.rect.collidelist(collideable_list):
-                    case 0:
-                        global player_1_dead
-                        player_1_dead = True
-                        print("Player 1 Dead:", player_1_dead)
-                        #if the game doesn't stop because of the player death, a new particle won't be spawned to take this particles place because the specific particle that killed the player can possibly pass through the bound of the map and be in the player's rect at the same time, which leads to the particle not being despawned
-                        #maybe add another if statement just for deleting particles that are out of bounds, but add it before the switch case statement so the particle isn't deleted before it can be checked for collision
-                    case 1:
-                        if player_1_deflection == "Left":
-                            #flip x-velocity
-                            self.vel_x = -self.vel_x
-                            if self.damaged:
-                                #I think this might cause issues because this would create an empty indice in the particles list which the check_list function in the outer class would try to use its respective .move() etc methods on which is incorrect and would produce an error since there is no longer an object in that list indice
-                                #Could solve this by having a while loop that removes any empty entries from the list before checking for collisions and moving, which would prevent any other possible problems of this type as well
-                                self.delete = True
-                                del self
-                            else:
-                                y = list(self.color)
-                                #make the particle red to represent it being damaged
-                                #convert tuple to list, modify list element, then convert to tuple. Thanks python!
-                                y[0] = y[0] + 200
-                                self.color = tuple(y)
-                                self.damaged = True
-                    case 2:
-                        if player_1_deflection == "Right":
-                            #flip x-velocity
-                            self.vel_x = -self.vel_x
-                            if self.damaged:
-                                self.delete = True
-                                del self
-                            else:
-                                y = list(self.color)
-                                y[0] = y[0] + 200
-                                self.color = tuple(y)
-                                self.damaged = True
-                    case 3:
-                        if player_1_deflection == "Down":
-                            # flip y-velocity
-                            self.vel_y = -self.vel_y
-                            if self.damaged:
-                                self.delete = True
-                                del self
-                            else:
-                                y = list(self.color)
-                                y[0] = y[0] + 200
-                                self.color = tuple(y)
-                                self.damaged = True
-                    case 8:
-                        #random numbers create varying particle paths for better gameplay
-                        self.pos_x = self.pos_x + random.randint(3,7)
-                        self.vel_x = -self.vel_x
-                    case 9:
-                        self.pos_y = self.pos_y + random.randint(3,7)
-                        self.vel_y = -self.vel_y
-                    case 10:
-                        self.pos_y = self.pos_y - random.randint(3,7)
-                        self.vel_y = -self.vel_y
-                    case 11:
-                        self.pos_x = self.pos_x - random.randint(3,7)
-                        self.vel_x = -self.vel_x
-
     def __init__(self):
         self.list = []
         self.frame = 0
@@ -263,8 +260,9 @@ class Particles:
         #I think this should append a new particle to the list in the outer class, but it doesn't appear to be working
         #When it works, I should be able to reference each of the particles by their index in the list found in the outer class, rather than having to reference each by a unique name
         #I could also try using a dictionary instead, but I think this is better since I'll be able to iterate through the list with a for loop using simple integer iteration
+        random_velocities = [-1, 1]
         if self.frame == 120:
-            particle = Particles.Particle(screen_width / 2, screen_height / 2, 2, -1, 5)
+            particle = Particles.Particle(screen_width / 2, screen_height / 2, random.choice(random_velocities), random.choice(random_velocities), 5)
             if len(self.list) < 7:
                 self.list.append(particle)
             self.frame = 0
@@ -417,6 +415,7 @@ while running:
             running = False
 
     while playing:
+
         #limit to 120 FPS
         clock.tick(FPS)
 
@@ -441,15 +440,18 @@ while running:
                     print("Right")
                     player_1_direction = "Right"
                 if event.key == pygame.K_f:
-                    if player_1_direction == "Left":
-                        draw_image(Vertical_Deflect_Bar, player_1_x - 30, player_1_y, True)
-                        player_1_deflection = player_1_direction
-                    if player_1_direction == "Down":
-                        draw_image(Horizontal_Deflect_Bar, player_1_x, player_1_y + 30, True)
-                        player_1_deflection = player_1_direction
-                    if player_1_direction == "Right":
-                        draw_image(Vertical_Deflect_Bar, player_1_x + 30, player_1_y, True)
-                        player_1_deflection = player_1_direction
+                    #direction is always going to be some value since it doesn't get reset
+                    #Use deflection instead since that gets cleared by check_bar_for_frame()
+                    if player_1_deflection == "":
+                        if player_1_direction == "Left":
+                            draw_image(Vertical_Deflect_Bar, player_1_x - 30, player_1_y, True)
+                            player_1_deflection = player_1_direction
+                        if player_1_direction == "Down":
+                            draw_image(Horizontal_Deflect_Bar, player_1_x, player_1_y + 30, True)
+                            player_1_deflection = player_1_direction
+                        if player_1_direction == "Right":
+                            draw_image(Vertical_Deflect_Bar, player_1_x + 30, player_1_y, True)
+                            player_1_deflection = player_1_direction
 
         match player_1_direction:
             case "Left":
@@ -460,6 +462,7 @@ while running:
                 draw_image(Small_Arrow_Down, player_1_x, player_1_y, True)
             case _:
                 draw_image(Small_Arrow_Down, player_1_x, player_1_y, True)
+
 
         player_1.check_bar_for_frame()
         draw_with_rect(wall_left_rect, (0, 50, 0))
