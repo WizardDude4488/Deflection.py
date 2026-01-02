@@ -370,11 +370,84 @@ class Particles:
             else:
                 self.list[index].move()
             index += 1
+    def get_list(self):
+        #function that returns the list of particles with component positions and velocities
 
+        index = 0
+        #empty list that has the particles and their data added to it
+        tracking_list = []
+
+        while index < len(self.list):
+            x = self.list[index].pos_x
+            y = self.list[index].pos_y
+            Vx = self.list[index].vel_x
+            Vy = self.list[index].vel_y
+            #null values (implemented using "None" in python) are added to have the correct list size for reassignment during the npc's protect_self method
+            entry = [x, y, Vx, Vy, None, None]
+
+            tracking_list.append(entry)
+            index += 1
+
+        return tracking_list
 
 
 
             #we can just assume that all the surfaces in the game can only be collided with horizontaly or vertically, not both, so this should make things easier.
+
+
+class npc:
+    def __init__(self):
+        self.pos_x = player_2_x
+        self.pos_y = player_2_y
+        self.rect = player_2_rect
+        #could add a difficulty attribute here that would be set by the player upon starting the 1 player mode
+    def protect_self(self):
+        list = particlesObj.get_list()
+
+        #function for generating the "threat" level of each particle (whether their path intersects with player 2/npc and how close)
+        def myfunction(list):
+            #draw a virtual line from the particle using component velocities and positions
+            #if the line intersects, then intersect = True
+
+            if
+                #return the total distance from the npc using pythagorean theorem
+            else:
+                return 0
+
+        for i in list:
+            start_x = list[i][0]
+            start_y = list[i][1]
+            vel_x = list[i][2]
+            vel_y = list[i][3]
+
+            start_pos = (start_x, start_y)
+            #create an endpoint that is arbitrarily far away from the start_pos to ensure none of the particles are "out of range" of the npc's vision
+            end_pos = (vel_x * 2000 + start_x, vel_y * 2000 + start_y)
+            #check whether this line will clip through the rect for player 2/npc
+            if player_2_rect.clipline(start_pos, end_pos):
+                list[i][4] = True
+            else:
+                list[i][4] = False
+
+            #clipline method returns two tuples
+            #the first tuple is the starting point of the line
+            #the second tuple is the ending point of the line
+            #the component distances are calculating by accessing the second tuple, and the respective indices of that tuple, then finding the distance between the values at those indices and the values at the start of the line
+            #this essentially calculates the distance between where the particle currently is and where it would contact with the player_2_rect and cause the npc to die
+            #this value is then divided by speed to calculate the time to intersect
+            #the time is then added to the particle's list as another value
+            #the particles are then reverse sorted by this value into another list
+            #the npc methods will then tell the npc which direction to face at any given frame, and whether to deflect if the closest particle is within a certain range
+            #absolutes are used to ensure that "negative" distances aren't sorted below positive distances
+            d_x = abs(player_2_rect.clipline(start_pos, end_pos)[1][0] - player_2_rect.clipline(start_pos, end_pos)[0][0])
+            d_y = abs(player_2_rect.clipline(start_pos, end_pos)[1][1] - player_2_rect.clipline(start_pos, end_pos)[0][1])
+            distance = math.sqrt(d_x ** 2 + d_y ** 2)
+            speed = math.sqrt(vel_x ** 2 + vel_y ** 2)
+            #multiply by FPS to get the number of seconds
+            #the "speed" value is in pixels per frame because that was how the speed was defined for the particles in the Particle.list
+            time_to_intersect = (distance / speed) * FPS
+            list[i][5] = time_to_intersect
+
 
 
 #create an object of the Particles class
@@ -384,6 +457,7 @@ particlesObj = Particles()
 #creating player 1 and 2 objects
 player_1 = Player1(player_1_x, player_1_y)
 player_2 = Player2(player_2_x, player_2_y)
+
 
 
 
@@ -498,6 +572,8 @@ while running:
             running = False
     match game_mode:
         case 1:
+
+            #create AI object here
             while playing:
 
                 #limit to 120 FPS
