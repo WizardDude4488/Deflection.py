@@ -1,9 +1,9 @@
-list = [10, 50, 80, 150]
+numbers = [10, 50, 80, 150, -100, -20]
 
 def function(n):
-    return -n
+    return abs(n)
 
-sorted = list.sort(reverse = True)
-for i in list:
-    print(list[i])
-    print("\n")
+numbers.sort(key = function)
+
+for i in numbers:
+    print(i)
