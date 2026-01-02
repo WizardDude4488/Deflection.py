@@ -17,7 +17,9 @@ screen_rect = (screen_width, screen_height)
 screen = pygame.display.set_mode(screen_rect)
 
 #load fonts
-text_font = pygame.font.Font("Retro Gaming.ttf", 30)
+menu_font = pygame.font.Font("Retro Gaming.ttf", 30)
+game_font = pygame.font.Font("Retro Gaming.ttf", 15)
+
 
 #load images
 Menu_Select_Arrow = pygame.image.load('Menu_Select_Arrow.png')
@@ -37,10 +39,12 @@ Menu_Select_Sound = pygame.mixer.Sound('Menu_Select.wav')
 Menu_Select_Sound.set_volume(0.75)
 
 #helper function for drawing text to the screen
-def draw_text(text, font, text_col, x, y):
+def draw_text(text, font, text_col, x, y, bg_color):
     img = font.render(text, True, text_col)
     rect = img.get_rect(center = (x, y))
+    pygame.draw.rect(screen, bg_color, rect)
     screen.blit(img, rect)
+    pygame.display.update(rect)
 
 #helper function for drawing an image to the screen from a file
 #only updates the part of the screen containing the image
@@ -67,6 +71,16 @@ def draw_with_rect(rect, color):
     pygame.draw.rect(screen, color, rect)
     pygame.display.update(rect)
 
+def clear_image(image, x, y, color, centered):
+    match centered:
+        case True:
+            image_rect = image.get_rect(center = (x, y))
+        case False:
+            image_rect =image.get_rect()
+
+    pygame.draw.rect(screen, color, image_rect)
+    pygame.display.update(image_rect)
+
 #player variables
 player_1_direction = ""
 player_1_deflection = ""
@@ -76,10 +90,10 @@ player_2_deflection = ""
 #globals for player 1 and 2 x and y positions
 #make sure to create player objects after variable declaration so interpreter knows what value to assign for the new object's parameters
 player_1_x = screen_width // 2
-player_1_y = 25
+player_1_y = 35 + 50
 
 player_2_x = screen_width // 2
-player_2_y = screen_height - 25
+player_2_y = screen_height - 35 - 50
 
 #creating the rects for the different objects in the game that the particles can collide with
 #added a little bit of buffer so it's more forgiving for the players
@@ -105,13 +119,14 @@ player_2_right_rect = pygame.Rect(player_2_x + 30, player_2_y, 10, 44)
 player_2_right_rect.center = (player_2_x + 30, player_2_y)
 
 #walls
-wall_left_rect = pygame.Rect(3, screen_height // 2, 5, screen_height)
-wall_left_rect.center = (3, screen_height // 2)
-wall_top_rect = pygame.Rect(screen_width // 2, 3, screen_width, 5)
-wall_top_rect.center = (screen_width // 2, 3)
-wall_bottom_rect = pygame.Rect(screen_width // 2, screen_height - 3, screen_width, 5)
-wall_bottom_rect.center = (screen_width // 2, screen_height - 3)
-wall_right_rect = pygame.Rect(screen_width - 3, screen_height // 2, 5, screen_height)
+#remember the first pixel is 0, not 1
+wall_left_rect = pygame.Rect(2, screen_height // 2, 5, screen_height - 100)
+wall_left_rect.center = (2, screen_height // 2)
+wall_top_rect = pygame.Rect(screen_width // 2, 49, screen_width, 5)
+wall_top_rect.center = (screen_width // 2, 49)
+wall_bottom_rect = pygame.Rect(screen_width // 2, screen_height - 50, screen_width, 5)
+wall_bottom_rect.center = (screen_width // 2, screen_height - 50)
+wall_right_rect = pygame.Rect(screen_width - 3, screen_height // 2, 5, screen_height - 100)
 wall_right_rect.center = (screen_width - 3, screen_height // 2)
 
 collideable_list = [player_1_rect, player_1_left_rect, player_1_right_rect, player_1_down_rect,
@@ -121,7 +136,10 @@ collideable_list = [player_1_rect, player_1_left_rect, player_1_right_rect, play
 #player life values
 
 player_1_dead = False
+player_1_score = 0
 player_2_dead = False
+player_2_score = 0
+
 
 #classes for player functions like checking whether a deflection bar should be displaying on a certain frame
 
@@ -130,6 +148,8 @@ class Player1:
         self.frame = 0
         self.player_x = player_x
         self.player_y = player_y
+        self.score_x = 0 + 49
+        self.score_y = 0 + 25
 
     def check_bar_for_frame(self):
         if self.frame == 0.4 * FPS:
@@ -143,6 +163,9 @@ class Player1:
             draw_rect(44, 4, self.player_x, self.player_y + 30, (0, 0, 0))
         else:
             self.frame += 1
+    def print_score(self):
+        global player_1_score
+        draw_text("Score:" + " " + str(player_1_score), game_font, (5, 21, 214), self.score_x, self.score_y, (0,0,0))
 
 
 class Player2:
@@ -150,6 +173,8 @@ class Player2:
         self.frame = 0
         self.player_x = player_x
         self.player_y = player_y
+        self.score_x = 0 + 49
+        self.score_y = screen_height - 25
 
     def check_bar_for_frame(self):
         if self.frame == 0.4 * FPS:
@@ -157,11 +182,15 @@ class Player2:
             player_2_deflection = ""
             self.frame = 0
             # this clears out any graphical remains of the deflection bars
-            draw_rect(4, 44, self.player_x + 30, self.player_y, (0, 0, 0))
-            draw_rect(4, 44, self.player_x - 30, self.player_y, (0, 0, 0))
-            draw_rect(4, 44, self.player_x, self.player_y - 30, (0, 0, 0))
+            clear_image(Vertical_Deflect_Bar, self.player_x + 30, self.player_y, (0, 0, 0), True)
+            clear_image(Vertical_Deflect_Bar, self.player_x - 30, self.player_y, (0, 0, 0), True)
+            clear_image(Horizontal_Deflect_Bar, self.player_x, self.player_y - 30, (0,0,0), True)
         else:
             self.frame += 1
+    def print_score(self):
+        global player_1_score
+        draw_text("Score:" + " " + str(player_1_score), game_font, (5, 21, 214), self.score_x, self.score_y, (0,0,0))
+
 
 #class for managing the list of particles
 class Particles:
@@ -193,11 +222,20 @@ class Particles:
             match self.rect.collidelist(collideable_list):
                 case 0:
                     global player_1_dead
-                    player_1_dead = True
-                    print("Player 1 Dead:", player_1_dead)
-                    self.delete = True
-                    # if the game doesn't stop because of the player death, a new particle won't be spawned to take this particles place because the specific particle that killed the player can possibly pass through the bound of the map and be in the player's rect at the same time, which leads to the particle not being despawned
-                    # maybe add another if statement just for deleting particles that are out of bounds, but add it before the switch case statement so the particle isn't deleted before it can be checked for collision
+                    global player_1_score
+                    match self.damaged:
+                        case False:
+                            player_1_dead = True
+                            print("Player 1 Dead:", player_1_dead)
+                            self.delete = True
+                        #if the game doesn't stop because of the player death, a new particle won't be spawned to take this particles place because the specific particle that killed the player can possibly pass through the bound of the map and be in the player's rect at the same time, which leads to the particle not being despawned
+                        #maybe add another if statement just for deleting particles that are out of bounds, but add it before the switch case statement so the particle isn't deleted before it can be checked for collision
+                        #damaged particles become coins that you can collect for score
+                        case True:
+                            player_1_score += 1
+                            player_1.print_score()
+                            self.delete = True
+
                 case 1:
                     if player_1_deflection == "Left":
                         # flip x-velocity and offset by 5 - 8 pixels
@@ -208,11 +246,9 @@ class Particles:
                             # Could solve this by having a while loop that removes any empty entries from the list before checking for collisions and moving, which would prevent any other possible problems of this type as well
                             self.delete = True
                         else:
-                            y = list(self.color)
                             # make the particle red to represent it being damaged
-                            # convert tuple to list, modify list element, then convert to tuple. Thanks python!
-                            y[0] = y[0] + 200
-                            self.color = tuple(y)
+                            #convert to gold color
+                            self.color = (255, 215, 0)
                             self.damaged = True
                 case 2:
                     if player_1_deflection == "Right":
@@ -222,9 +258,7 @@ class Particles:
                         if self.damaged:
                             self.delete = True
                         else:
-                            y = list(self.color)
-                            y[0] = y[0] + 200
-                            self.color = tuple(y)
+                            self.color = (255, 215, 0)
                             self.damaged = True
                 case 3:
                     if player_1_deflection == "Down":
@@ -234,15 +268,23 @@ class Particles:
                         if self.damaged:
                             self.delete = True
                         else:
-                            y = list(self.color)
-                            y[0] = y[0] + 200
-                            self.color = tuple(y)
+                            self.color = (255, 215, 0)
                             self.damaged = True
                 case 4:
                     global player_2_dead
-                    player_2_dead = True
-                    print("Player 2 Dead:", player_2_dead)
-                    self.delete = True
+                    global player_2_score
+                    match self.damaged:
+                        case False:
+                            player_2_dead = True
+                            print("Player 1 Dead:", player_2_dead)
+                            self.delete = True
+                        # if the game doesn't stop because of the player death, a new particle won't be spawned to take this particles place because the specific particle that killed the player can possibly pass through the bound of the map and be in the player's rect at the same time, which leads to the particle not being despawned
+                        # maybe add another if statement just for deleting particles that are out of bounds, but add it before the switch case statement so the particle isn't deleted before it can be checked for collision
+                        # damaged particles become coins that you can collect for score
+                        case True:
+                            player_2_score += 1
+                            player_2.print_score()
+                            self.delete = True
                 case 5:
                     if player_2_deflection == "Left":
                         # flip x-velocity
@@ -251,9 +293,7 @@ class Particles:
                         if self.damaged:
                             self.delete = True
                         else:
-                            y = list(self.color)
-                            y[0] = y[0] + 200
-                            self.color = tuple(y)
+                            self.color = (255, 215, 0)
                             self.damaged = True
                 case 6:
                     if player_2_deflection == "Right":
@@ -263,9 +303,7 @@ class Particles:
                         if self.damaged:
                             self.delete = True
                         else:
-                            y = list(self.color)
-                            y[0] = y[0] + 200
-                            self.color = tuple(y)
+                            self.color = (255, 215, 0)
                             self.damaged = True
                 case 7:
                     if player_2_deflection == "Up":
@@ -275,9 +313,7 @@ class Particles:
                         if self.damaged:
                             self.delete = True
                         else:
-                            y = list(self.color)
-                            y[0] = y[0] + 200
-                            self.color = tuple(y)
+                            self.color = (255, 215, 0)
                             self.damaged = True
                 case 8:
                     # random numbers create varying particle paths for better gameplay
@@ -381,7 +417,7 @@ while running:
     while start:
 
         #use the pygame text function to display the start menu text
-        draw_text("Deflection", text_font, (5, 21, 214), screen_width / 2, screen_height / 2)
+        draw_text("Deflection", menu_font, (5, 21, 214), screen_width / 2, screen_height / 2, (0,0,0))
         pygame.display.flip()
 
 
@@ -405,8 +441,8 @@ while running:
     while player_select:
 
         #draws the text for the menu
-        draw_text("1 Player", text_font, (5, 21, 214), screen_width / 2, screen_height / 2)
-        draw_text("2 Player", text_font, (5, 21, 214), screen_width / 2, screen_height / 2 + 100)
+        draw_text("1 Player", menu_font, (5, 21, 214), screen_width / 2, screen_height / 2, (0,0,0))
+        draw_text("2 Player", menu_font, (5, 21, 214), screen_width / 2, screen_height / 2 + 100, (0,0,0))
         pygame.display.flip()
 
 
@@ -436,7 +472,7 @@ while running:
 
     if game_mode == 1 and waiting and running:
         screen.fill((0,0,0))
-        draw_text("Player 1: AWD for directions, F to deflect.", text_font, (5, 21, 214), screen_width / 2, screen_height / 2)
+        draw_text("Player 1: AWD for directions, F to deflect.", menu_font, (5, 21, 214), screen_width / 2, screen_height / 2, (0,0,0))
         pygame.display.flip()
         Menu_Select_Sound.play()
         print("play")
@@ -445,8 +481,8 @@ while running:
         pygame.time.delay(3000)
     if game_mode == 2 and waiting and running:
         screen.fill((0, 0, 0))
-        draw_text("Player 1: WSD for directions, F to deflect.", text_font, (5, 21, 214), screen_width / 2, screen_height / 2 - 50)
-        draw_text("Player 2: Arrows for directions, ctrl to deflect.", text_font, (5, 21, 214), screen_width / 2, screen_height / 2 + 50)
+        draw_text("Player 1: WSD for directions, F to deflect.", menu_font, (5, 21, 214), screen_width / 2, screen_height / 2 - 50, (0,0,0))
+        draw_text("Player 2: Arrows for directions, ctrl to deflect.", menu_font, (5, 21, 214), screen_width / 2, screen_height / 2 + 50, (0,0,0))
         pygame.display.flip()
         Menu_Select_Sound.play()
         print("play")
@@ -540,6 +576,11 @@ while running:
                 draw_with_rect(wall_bottom_rect, (0, 50, 0))
                 draw_with_rect(wall_right_rect, (0, 50, 0))
 
+                #initialize UI
+                player_1.print_score()
+                player_2.print_score()
+
+
                 # user input for directions
                 for event in pygame.event.get():
                     if event.type == pygame.QUIT:
@@ -617,15 +658,18 @@ while running:
                         draw_image(Small_Arrow_Right, player_2_x, player_2_y, True)
                     case "Up":
                         draw_image(Small_Arrow_Up, player_2_x, player_2_y, True)
+                    case _:
+                        draw_image(Small_Arrow_Up, player_2_x, player_2_y, True)
 
-                #checking I-frames
-                player_1.check_bar_for_frame()
-                player_2.check_bar_for_frame()
+
 
 
                 particlesObj.spawn_particle()
                 particlesObj.check_list()
 
+                #checking I-frames
+                player_1.check_bar_for_frame()
+                player_2.check_bar_for_frame()
 
 
 
