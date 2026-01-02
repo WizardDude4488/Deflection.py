@@ -276,7 +276,7 @@ class Particles:
                     match self.damaged:
                         case False:
                             player_2_dead = True
-                            print("Player 1 Dead:", player_2_dead)
+                            print("Player 2 Dead:", player_2_dead)
                             self.delete = True
                         # if the game doesn't stop because of the player death, a new particle won't be spawned to take this particles place because the specific particle that killed the player can possibly pass through the bound of the map and be in the player's rect at the same time, which leads to the particle not being despawned
                         # maybe add another if statement just for deleting particles that are out of bounds, but add it before the switch case statement so the particle isn't deleted before it can be checked for collision
@@ -404,93 +404,93 @@ class npc:
     def protect_self(self):
         tracking_list = particlesObj.get_list()
 
-        #function for generating the "threat" level of each particle (whether their path intersects with player 2/npc and how close)
-        def sort_times(particles_list):
-            #empty dictionary for sorting
-            time_list = {}
-            for i in particles_list:
-                time_list[i] = time_list
+        #this method doesn't work if the tracking list would have zero entries, in the case of the start of gameplay
+        #the method won't try to run if there are no items in the tracking list
+        if len(tracking_list) > 0:
+            index = 0
+            while index < len(tracking_list):
+                #easier variable
+                i = index
+                start_x = tracking_list[i][0]
+                start_y = tracking_list[i][1]
+                vel_x = tracking_list[i][2]
+                vel_y = tracking_list[i][3]
+
+                start_pos = (start_x, start_y)
+                #create an endpoint that is arbitrarily far away from the start_pos to ensure none of the particles are "out of range" of the npc's vision
+                end_pos = (vel_x * 2000 + start_x, vel_y * 2000 + start_y)
+                #check whether this line will clip through the rect for player 2/npc
+                if player_2_rect.clipline(start_pos, end_pos):
+                    tracking_list[i][4] = True
+                else:
+                    tracking_list[i][4] = False
+
+                #clipline method returns two tuples
+                #the first tuple is the starting point of the line
+                #the second tuple is the ending point of the line
+                #the component distances are calculating by accessing the second tuple, and the respective indices of that tuple, then finding the distance between the values at those indices and the values at the start of the line
+                #this essentially calculates the distance between where the particle currently is and where it would contact with the player_2_rect and cause the npc to die
+                #this value is then divided by speed to calculate the time to intersect
+                #the time is then added to the particle's list as another value
+                #the particles are then reverse sorted by this value into another list
+                #the npc methods will then tell the npc which direction to face at any given frame, and whether to deflect if the closest particle is within a certain range
+                #absolutes are used to ensure that "negative" distances aren't sorted below positive distances
+                d_x = abs(player_2_rect.clipline(start_pos, end_pos)[1][0] - player_2_rect.clipline(start_pos, end_pos)[0][0])
+                d_y = abs(player_2_rect.clipline(start_pos, end_pos)[1][1] - player_2_rect.clipline(start_pos, end_pos)[0][1])
+                distance = math.sqrt(d_x ** 2 + d_y ** 2)
+                speed = math.sqrt(vel_x ** 2 + vel_y ** 2)
+                #multiply by FPS to get the number of seconds
+                #the "speed" value is in pixels per frame because that was how the speed was defined for the particles in the Particle.list
+                time_to_intersect = (distance / speed) * FPS
+                tracking_list[i][5] = time_to_intersect
+                #increment loop
+                i += 1
 
 
-        for i in tracking_list:
-            start_x = tracking_list[i][0]
-            start_y = tracking_list[i][1]
-            vel_x = tracking_list[i][2]
-            vel_y = tracking_list[i][3]
+                time_list = {}
 
-            start_pos = (start_x, start_y)
-            #create an endpoint that is arbitrarily far away from the start_pos to ensure none of the particles are "out of range" of the npc's vision
-            end_pos = (vel_x * 2000 + start_x, vel_y * 2000 + start_y)
-            #check whether this line will clip through the rect for player 2/npc
-            if player_2_rect.clipline(start_pos, end_pos):
-                tracking_list[i][4] = True
-            else:
-                tracking_list[i][4] = False
+                for i in tracking_list:
+                    time_list[i] = tracking_list[i][5]
 
-            #clipline method returns two tuples
-            #the first tuple is the starting point of the line
-            #the second tuple is the ending point of the line
-            #the component distances are calculating by accessing the second tuple, and the respective indices of that tuple, then finding the distance between the values at those indices and the values at the start of the line
-            #this essentially calculates the distance between where the particle currently is and where it would contact with the player_2_rect and cause the npc to die
-            #this value is then divided by speed to calculate the time to intersect
-            #the time is then added to the particle's list as another value
-            #the particles are then reverse sorted by this value into another list
-            #the npc methods will then tell the npc which direction to face at any given frame, and whether to deflect if the closest particle is within a certain range
-            #absolutes are used to ensure that "negative" distances aren't sorted below positive distances
-            d_x = abs(player_2_rect.clipline(start_pos, end_pos)[1][0] - player_2_rect.clipline(start_pos, end_pos)[0][0])
-            d_y = abs(player_2_rect.clipline(start_pos, end_pos)[1][1] - player_2_rect.clipline(start_pos, end_pos)[0][1])
-            distance = math.sqrt(d_x ** 2 + d_y ** 2)
-            speed = math.sqrt(vel_x ** 2 + vel_y ** 2)
-            #multiply by FPS to get the number of seconds
-            #the "speed" value is in pixels per frame because that was how the speed was defined for the particles in the Particle.list
-            time_to_intersect = (distance / speed) * FPS
-            tracking_list[i][5] = time_to_intersect
+                #basically, a new dictionary is created with the time_list indices as the keys
+                #this dictionary is based on the sorted version of the time_list dictionary
+                #when the sorted method is called, it converts each entry in the dictionary into a tuple with indices 0 and 1.
+                #index 0 holds the item name, and index 1 holds the value or definition
+                #the list is then sorted based on this lambda function, which tells the computer to sort using the value of index 1
+                time_list_sorted = list(sorted(time_list.items(), key = lambda item: item[1]))
 
+                #access the index of the highest threat particle
+                time_list_closest_index = time_list_sorted[0][0]
+                #access the particles info list at that index
+                tracking_list_closest = tracking_list[time_list_closest_index]
 
-        time_list = {}
+                #access the x-pos from the list
+                closest_x = tracking_list_closest[0]
+                closest_y = tracking_list_closest[1]
+                closest_vel_x = tracking_list_closest[2]
+                closest_vel_y = tracking_list_closest[3]
 
-        for i in tracking_list:
-            time_list[i] = time_list[5]
+                closest_stop_x = closest_vel_x * 2000 + closest_x
+                closest_stop_y = closest_vel_y * 2000 + closest_y
 
-        #basically, a new dictionary is created with the time_list indices as the keys
-        #this dictionary is based on the sorted version of the time_list dictionary
-        #when the sorted method is called, it converts each entry in the dictionary into a tuple with indices 0 and 1.
-        #index 0 holds the item name, and index 1 holds the value or definition
-        #the list is then sorted based on this lambda function, which tells the computer to sort using the value of index 1
-        time_list_sorted = list(sorted(time_list.items(), key = lambda item: item[1]))
+                closest_pos = (closest_x, closest_y)
+                closest_stop = (closest_stop_x, closest_stop_y)
 
-        #access the index of the highest threat particle
-        time_list_closest_index = time_list_sorted[0][0]
-        #access the particles info list at that index
-        tracking_list_closest = tracking_list[time_list_closest_index]
+                #determining which deflect bar the line from the particle to the npc collides with
+                global player_2_direction
+                global player_2_deflection
+                if player_2_left_rect.clipline(closest_pos, closest_stop):
+                    player_2_direction = "Left"
+                if player_2_up_rect.clipline(closest_pos, closest_stop):
+                    player_2_direction = "Up"
+                if player_2_right_rect.clipline(closest_pos, closest_stop):
+                    player_2_direction = "Right"
+                else:
+                        player_2_direction = "Up"
 
-        #access the x-pos from the list
-        closest_x = tracking_list_closest[0]
-        closest_y = tracking_list_closest[1]
-        closest_vel_x = tracking_list_closest[2]
-        closest_vel_y = tracking_list_closest[3]
-
-        closest_stop_x = closest_vel_x * 2000 + closest_x
-        closest_stop_y = closest_vel_y * 2000 + closest_y
-
-        closest_pos = (closest_x, closest_y)
-        closest_stop = (closest_stop_x, closest_stop_y)
-
-        #determining which deflect bar the line from the particle to the npc collides with
-        global player_2_direction
-        global player_2_deflection
-        if player_2_left_rect.clipline(closest_pos, closest_stop):
-            player_2_direction = "Left"
-        if player_2_up_rect.clipline(closest_pos, closest_stop):
-            player_2_direction = "Up"
-        if player_2_right_rect.clipline(closest_pos, closest_stop):
-            player_2_direction = "Right"
-        else:
-                player_2_direction = "Up"
-
-        #if the particle gets within a certain time to collision, use the deflect bar
-        if tracking_list_closest[0][5] < 0.3 * FPS:
-                player_2_deflection = player_2_direction
+                #if the particle gets within a certain time to collision, use the deflect bar
+                if tracking_list_closest[0][5] < 0.3 * FPS:
+                        player_2_deflection = player_2_direction
 
 
 
@@ -658,6 +658,8 @@ while running:
                                     draw_image(Vertical_Deflect_Bar, player_1_x + 30, player_1_y, True)
                                     player_1_deflection = player_1_direction
 
+                computer.protect_self()
+
                 match player_1_direction:
                     case "Left":
                         draw_image(Small_Arrow_Left, player_1_x, player_1_y, True)
@@ -668,7 +670,16 @@ while running:
                     case _:
                         draw_image(Small_Arrow_Down, player_1_x, player_1_y, True)
 
-                computer.protect_self()
+                match player_2_direction:
+                    case "Left":
+                        draw_image(Small_Arrow_Left, player_2_x, player_2_y, True)
+                    case "Right":
+                        draw_image(Small_Arrow_Right, player_2_x, player_2_y, True)
+                    case "Up":
+                        draw_image(Small_Arrow_Up, player_2_x, player_2_y, True)
+                    case _:
+                        draw_image(Small_Arrow_Up, player_2_x, player_2_y, True)
+
                 player_2.check_bar_for_frame()
 
                 player_1.check_bar_for_frame()
