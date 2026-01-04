@@ -1,6 +1,9 @@
 Hello! Welcome to my game project called _Deflection_.
 
-(Add description here)
+It's a one player vs computer or two player game.
+The goal is to deflect randomly spawned blue particles, and hit gold particles for points.
+The game ends when the other player is hit by a blue particle.
+Enjoy!
 
 Resources:
 
