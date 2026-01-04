@@ -113,7 +113,8 @@ player_2_rect = pygame.Rect(player_2_x, player_2_y, 50, 50)
 player_2_rect.center = (player_2_x, player_2_y)
 player_2_left_rect = pygame.Rect(player_2_x - 30, player_2_y, 10, 44)
 player_2_left_rect.center = (player_2_x - 30, player_2_y)
-player_2_up_rect = pygame.Rect(player_2_x, player_2_y - 30, 44, 10)
+#made the width slightly wider for AI as a test
+player_2_up_rect = pygame.Rect(player_2_x, player_2_y - 30, 50, 10)
 player_2_up_rect.center = (player_2_x, player_2_y - 30)
 player_2_right_rect = pygame.Rect(player_2_x + 30, player_2_y, 10, 44)
 player_2_right_rect.center = (player_2_x + 30, player_2_y)
@@ -382,8 +383,8 @@ class Particles:
             y = self.list[index].pos_y
             Vx = self.list[index].vel_x
             Vy = self.list[index].vel_y
-            #null values (implemented using "None" in python) are added to have the correct list size for reassignment during the npc's protect_self method
-            entry = [x, y, Vx, Vy, None, None]
+            #garbage values to start with
+            entry = [x, y, Vx, Vy, 10000, 10000]
 
             tracking_list.append(entry)
             index += 1
@@ -449,56 +450,62 @@ class npc:
                 else:
                     tracking_list[i][4] = False
 
+                index += 1
+
             time_list = {}
 
-            for i in tracking_list:
+            i_2 = 0
+            while i_2 < len(tracking_list):
                 #if they intersect, add their time
-                if tracking_list[i][4]:
-                    time_list[i] = tracking_list[i][5]
+                if tracking_list[i_2][4]:
+                    time_list[i_2] = tracking_list[i_2][5]
                 #if not, add a large enough value that they will be sorted to the back
                 else:
-                    time_list[i] = 10000
+                    time_list[i_2] = 10000
+                i_2 += 1
 
             # basically, a new dictionary is created with the time_list indices as the keys
             # this dictionary is based on the sorted version of the time_list dictionary
             # when the sorted method is called, it converts each entry in the dictionary into a tuple with indices 0 and 1.
             # index 0 holds the item name, and index 1 holds the value or definition
-            # the list is then sorted based on this lambda function, which tells the computer to sort using the value of index 1
-            time_list_sorted = list(sorted(time_list.items(), key=lambda item: item[1]))
+            # find the minimum time value
+            tracking_list_closest = min(time_list.items(), key=lambda item: item[1])
 
-            # access the index of the highest threat particle
-            # I think this should be [0] not [0][0]
-            time_list_closest_index = time_list_sorted[0][0]
-            # access the particles info list at that index
-            tracking_list_closest = tracking_list[time_list_closest_index]
+            #this returns the particle list that is closest time-wise to player 2/self.rect
+            tracking_list_closest_index = tracking_list_closest[0]
+            tracking_list_closest = tracking_list[tracking_list_closest_index]
 
-            # access the x-pos from the list
-            closest_x = tracking_list_closest[0]
-            closest_y = tracking_list_closest[1]
-            closest_vel_x = tracking_list_closest[2]
-            closest_vel_y = tracking_list_closest[3]
+            if tracking_list_closest[4]:
 
-            closest_stop_x = closest_vel_x * 2000 + closest_x
-            closest_stop_y = closest_vel_y * 2000 + closest_y
+                # access the x-pos from the list
+                closest_x = tracking_list_closest[0]
+                closest_y = tracking_list_closest[1]
+                closest_vel_x = tracking_list_closest[2]
+                closest_vel_y = tracking_list_closest[3]
 
-            closest_pos = (closest_x, closest_y)
-            closest_stop = (closest_stop_x, closest_stop_y)
+                closest_stop_x = closest_vel_x * 2000 + closest_x
+                closest_stop_y = closest_vel_y * 2000 + closest_y
 
-            # determining which deflect bar the line from the particle to the npc collides with
-            global player_2_direction
-            global player_2_deflection
-            if player_2_left_rect.clipline(closest_pos, closest_stop):
-                player_2_direction = "Left"
-            if player_2_up_rect.clipline(closest_pos, closest_stop):
-                player_2_direction = "Up"
-            if player_2_right_rect.clipline(closest_pos, closest_stop):
-                player_2_direction = "Right"
-            else:
-                player_2_direction = "Up"
+                closest_pos = (closest_x, closest_y)
+                closest_stop = (closest_stop_x, closest_stop_y)
 
-            # if the particle gets within a certain time to collision, use the deflect bar
-            if tracking_list_closest[0][5] < 0.3 * FPS:
+                # determining which deflect bar the line from the particle to the npc collides with
+                global player_2_direction
+                global player_2_deflection
+                if player_2_up_rect.clipline(closest_pos, closest_stop):
+                    player_2_direction = "Up"
+                if player_2_left_rect.clipline(closest_pos, closest_stop):
+                    player_2_direction = "Left"
+                if player_2_right_rect.clipline(closest_pos, closest_stop):
+                    player_2_direction = "Right"
+                else:
+                    player_2_direction = "Up"
+
+                # if the particle gets within a certain time to collision, use the deflect bar
+                #if tracking_list_closest[5] < 0.3 * FPS:
                 player_2_deflection = player_2_direction
+                print("\n" + str(time_list))
+                print(tracking_list_closest)
 
 
 #create an object of the Particles class
