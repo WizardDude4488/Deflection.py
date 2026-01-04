@@ -101,22 +101,22 @@ player_2_y = screen_height - 35 - 50
 #player 1
 player_1_rect = pygame.Rect(player_1_x, player_1_y, 50, 50)
 player_1_rect.center = (player_1_x, player_1_y)
-player_1_left_rect = pygame.Rect(player_1_x - 30, player_1_y, 10, 44)
+player_1_left_rect = pygame.Rect(player_1_x - 30, player_1_y, 10, 50)
 player_1_left_rect.center = (player_1_x - 30, player_1_y)
-player_1_down_rect = pygame.Rect(player_1_x, player_1_y + 30, 44, 10)
+player_1_down_rect = pygame.Rect(player_1_x, player_1_y + 30, 50, 10)
 player_1_down_rect.center = (player_1_x, player_1_y + 30)
-player_1_right_rect = pygame.Rect(player_1_x + 30, player_1_y, 10, 44)
+player_1_right_rect = pygame.Rect(player_1_x + 30, player_1_y, 10, 50)
 player_1_right_rect.center = (player_1_x + 30, player_1_y)
 
 #player 2
 player_2_rect = pygame.Rect(player_2_x, player_2_y, 50, 50)
 player_2_rect.center = (player_2_x, player_2_y)
-player_2_left_rect = pygame.Rect(player_2_x - 30, player_2_y, 10, 44)
+player_2_left_rect = pygame.Rect(player_2_x - 30, player_2_y, 10, 50)
 player_2_left_rect.center = (player_2_x - 30, player_2_y)
 #made the width slightly wider for AI as a test
 player_2_up_rect = pygame.Rect(player_2_x, player_2_y - 30, 50, 10)
 player_2_up_rect.center = (player_2_x, player_2_y - 30)
-player_2_right_rect = pygame.Rect(player_2_x + 30, player_2_y, 10, 44)
+player_2_right_rect = pygame.Rect(player_2_x + 30, player_2_y, 10, 50)
 player_2_right_rect.center = (player_2_x + 30, player_2_y)
 
 #walls
@@ -133,6 +133,8 @@ wall_right_rect.center = (screen_width - 3, screen_height // 2)
 collideable_list = [player_1_rect, player_1_left_rect, player_1_right_rect, player_1_down_rect,
                     player_2_rect, player_2_left_rect, player_2_right_rect, player_2_up_rect,
                     wall_left_rect, wall_top_rect, wall_bottom_rect, wall_right_rect]
+
+particles_data = []
 
 #player life values
 
@@ -318,16 +320,16 @@ class Particles:
                             self.damaged = True
                 case 8:
                     # random numbers create varying particle paths for better gameplay
-                    self.pos_x = self.pos_x + random.randint(3, 7)
+                    self.pos_x = self.pos_x + random.randint(2, 10)
                     self.vel_x = -self.vel_x
                 case 9:
-                    self.pos_y = self.pos_y + random.randint(3, 7)
+                    self.pos_y = self.pos_y + random.randint(2, 10)
                     self.vel_y = -self.vel_y
                 case 10:
-                    self.pos_y = self.pos_y - random.randint(3, 7)
+                    self.pos_y = self.pos_y - random.randint(2, 10)
                     self.vel_y = -self.vel_y
                 case 11:
-                    self.pos_x = self.pos_x - random.randint(3, 7)
+                    self.pos_x = self.pos_x - random.randint(2, 10)
                     self.vel_x = -self.vel_x
 
             # check if particle is out of bounds, if so, delete
@@ -344,9 +346,11 @@ class Particles:
         #I think this should append a new particle to the list in the outer class, but it doesn't appear to be working
         #When it works, I should be able to reference each of the particles by their index in the list found in the outer class, rather than having to reference each by a unique name
         #I could also try using a dictionary instead, but I think this is better since I'll be able to iterate through the list with a for loop using simple integer iteration
-        random_velocities = [-1, 1]
+        random_nums = [-1, 1]
+        random_x = [screen_width - 50, 50]
+        random_y = [screen_height - 70, 70]
         if self.frame == 120:
-            particle = Particles.Particle(screen_width / 2, screen_height / 2, random.choice(random_velocities), random.choice(random_velocities), 5)
+            particle = Particles.Particle(random.choice(random_x) + random.choice(random_nums) * random.randint(1, 15), random.choice(random_y) + random.choice(random_nums) * random.randint(1, 15), random.choice(random_nums), random.choice(random_nums), 5)
             if len(self.list) < 7:
                 self.list.append(particle)
             self.frame = 0
@@ -377,6 +381,7 @@ class Particles:
         index = 0
         #empty list that has the particles and their data added to it
         tracking_list = []
+        global particles_data
 
         while index < len(self.list):
             x = self.list[index].pos_x
@@ -389,7 +394,9 @@ class Particles:
             tracking_list.append(entry)
             index += 1
 
-        return(tracking_list)
+        particles_data = tracking_list
+        return tracking_list
+
 
 
 
@@ -403,7 +410,9 @@ class npc:
         self.rect = player_2_rect
         #could add a difficulty attribute here that would be set by the player upon starting the 1 player mode
     def protect_self(self):
-        tracking_list = particlesObj.get_list()
+        #tracking_list = particlesObj.get_list()
+        particlesObj.get_list()
+        tracking_list = particles_data
 
         #this method doesn't work if the tracking list would have zero entries, in the case of the start of gameplay
         #the method won't try to run if there are no items in the tracking list
@@ -437,10 +446,10 @@ class npc:
                 #the npc methods will then tell the npc which direction to face at any given frame, and whether to deflect if the closest particle is within a certain range
                 #absolutes are used to ensure that "negative" distances aren't sorted below positive distances
 
-                    d_x = abs(player_2_rect.clipline(start_pos, end_pos)[1][0] -
-                              player_2_rect.clipline(start_pos, end_pos)[0][0])
-                    d_y = abs(player_2_rect.clipline(start_pos, end_pos)[1][1] -
-                              player_2_rect.clipline(start_pos, end_pos)[0][1])
+                    #I think I might be calculating this wrong
+                    #It should be calculated as the distance between the position of the particle and the first point where it collides with the rect
+                    d_x = abs(start_x - player_2_rect.clipline(start_pos, end_pos)[0][0])
+                    d_y = abs(start_y - player_2_rect.clipline(start_pos, end_pos)[0][1])
                     distance = math.sqrt(d_x ** 2 + d_y ** 2)
                     speed = math.sqrt(vel_x ** 2 + vel_y ** 2)
                     # multiply by FPS to get the number of pixels per second
@@ -489,17 +498,43 @@ class npc:
                 closest_pos = (closest_x, closest_y)
                 closest_stop = (closest_stop_x, closest_stop_y)
 
-                # determining which deflect bar the line from the particle to the npc collides with
+                # determining which deflect bar the line from the particle to the npc collides with first
+
                 global player_2_direction
                 global player_2_deflection
                 if player_2_up_rect.clipline(closest_pos, closest_stop):
-                    player_2_direction = "Up"
-                if player_2_left_rect.clipline(closest_pos, closest_stop):
-                    player_2_direction = "Left"
-                if player_2_right_rect.clipline(closest_pos, closest_stop):
-                    player_2_direction = "Right"
+                    distance_to_up_x = (player_2_up_rect.clipline(closest_pos, closest_stop)[0][0] - closest_x)
+                    distance_to_up_y = (player_2_up_rect.clipline(closest_pos, closest_stop)[0][1] - closest_y)
+                    distance_to_up = math.sqrt(distance_to_up_x ** 2 + distance_to_up_y ** 2)
                 else:
-                    player_2_direction = "Up"
+                    distance_to_up = 10000
+
+                if player_2_left_rect.clipline(closest_pos, closest_stop):
+                    distance_to_left_x = (player_2_left_rect.clipline(closest_pos, closest_stop)[0][0] - closest_x)
+                    distance_to_left_y = (player_2_left_rect.clipline(closest_pos, closest_stop)[0][1] - closest_y)
+                    distance_to_left = math.sqrt(distance_to_left_x ** 2 + distance_to_left_y ** 2)
+                else:
+                    distance_to_left = 10000
+
+                if player_2_right_rect.clipline(closest_pos, closest_stop):
+                    distance_to_right_x = (player_2_right_rect.clipline(closest_pos, closest_stop)[0][0] - closest_x)
+                    distance_to_right_y = (player_2_right_rect.clipline(closest_pos, closest_stop)[0][1] - closest_y)
+                    distance_to_right = math.sqrt(distance_to_right_x ** 2 + distance_to_right_y ** 2)
+                else:
+                    distance_to_right = 10000
+
+                distances_list = {"Up": distance_to_up, "Left": distance_to_left, "Right": distance_to_right}
+
+                closest_bar = min(distances_list.items(), key = lambda item: item[1])
+
+                match closest_bar[0]:
+                    case "Up":
+                        player_2_direction = "Up"
+                    case "Left":
+                        player_2_direction = "Left"
+                    case "Right":
+                        player_2_direction = "Right"
+
 
                 # if the particle gets within a certain time to collision, use the deflect bar
                 #if tracking_list_closest[5] < 0.3 * FPS:
@@ -701,6 +736,12 @@ while running:
                 draw_with_rect(wall_top_rect, (0, 50, 0))
                 draw_with_rect(wall_bottom_rect, (0, 50, 0))
                 draw_with_rect(wall_right_rect, (0, 50, 0))
+
+                #testing
+                draw_image(Vertical_Deflect_Bar, player_2_x - 30, player_2_y, True)
+                draw_image(Horizontal_Deflect_Bar, player_2_x, player_2_y - 30, True)
+                draw_image(Vertical_Deflect_Bar, player_2_x + 30, player_2_y, True)
+
 
                 particlesObj.spawn_particle()
                 particlesObj.check_list()
