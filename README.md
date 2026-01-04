@@ -5,6 +5,9 @@ The goal is to deflect randomly spawned blue particles, and hit gold particles f
 The game ends when the other player is hit by a blue particle.
 Enjoy!
 
+Instructions:
+Use the arrow keys to navigate the menu. The other controls should be explained within the game. Let me know if there are any issues!
+
 Resources:
 
 Font for menu and gameplay items: https://www.dafont.com/retro-gaming.font 
