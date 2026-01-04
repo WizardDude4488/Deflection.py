@@ -16,6 +16,9 @@ screen_rect = (screen_width, screen_height)
 #display
 screen = pygame.display.set_mode(screen_rect)
 
+#FPS
+FPS = 120
+
 #load fonts
 menu_font = pygame.font.Font("Retro Gaming.ttf", 30)
 game_font = pygame.font.Font("Retro Gaming.ttf", 15)
@@ -104,13 +107,19 @@ def game_end(player_who_won):
 
 class Event:
     def __init__(self):
-        self.frame = 0
+        global FPS
+        self.frame = FPS * 90
         self.game_over = False
+        self.x = screen_width - 50
+        self.y = 25
     def check_for_end(self):
+        global FPS
         if self.frame / FPS == 90:
             self.game_over = True
         else:
-            self.frame += 1
+            self.frame -= 1
+            draw_text(str(self.frame / FPS), game_font, (5, 21, 214), self.x, self.y, (0,0,0))
+
 
 
 
@@ -213,7 +222,7 @@ class Player2:
         self.frame = 0
         self.player_x = player_x
         self.player_y = player_y
-        self.score_x = 0 + 49
+        self.score_x = 49
         self.score_y = screen_height - 25
 
     def check_bar_for_frame(self):
@@ -258,11 +267,14 @@ class Particles:
             pygame.display.update(self.rect)
         def check_collision(self):
             global player_1_deflection
+            global player_1_score
+            global player_1_dead
+            global player_2_deflection
+            global player_2_score
+            global player_2_dead
             # put the list for the collideable objects here
             match self.rect.collidelist(collideable_list):
                 case 0:
-                    global player_1_dead
-                    global player_1_score
                     match self.damaged:
                         case False:
                             player_1_dead = True
@@ -272,7 +284,7 @@ class Particles:
                         #maybe add another if statement just for deleting particles that are out of bounds, but add it before the switch case statement so the particle isn't deleted before it can be checked for collision
                         #damaged particles become coins that you can collect for score
                         case True:
-
+                            Coin_Destroyed_Sound.play()
                             self.delete = True
 
                 case 1:
@@ -283,9 +295,8 @@ class Particles:
                         if self.damaged:
                             # I think this might cause issues because this would create an empty indice in the particles list which the check_list function in the outer class would try to use its respective .move() etc methods on which is incorrect and would produce an error since there is no longer an object in that list indice
                             # Could solve this by having a while loop that removes any empty entries from the list before checking for collisions and moving, which would prevent any other possible problems of this type as well
-                            global player_1_score
                             player_1_score += 1
-
+                            Pickup_Coin_Sound.play()
                             player_1.print_score()
                             self.delete = True
                         else:
@@ -299,9 +310,8 @@ class Particles:
                         self.pos_x = self.pos_x + random.randint(5, 8)
                         self.vel_x = -self.vel_x
                         if self.damaged:
-                            global player_1_score
                             player_1_score += 1
-
+                            Pickup_Coin_Sound.play()
                             player_1.print_score()
                             self.delete = True
                         else:
@@ -313,17 +323,14 @@ class Particles:
                         self.pos_y = self.pos_y + random.randint(5, 8)
                         self.vel_y = -self.vel_y
                         if self.damaged:
-                            global player_1_score
                             player_1_score += 1
-
+                            Pickup_Coin_Sound.play()
                             player_1.print_score()
                             self.delete = True
                         else:
                             self.color = (255, 215, 0)
                             self.damaged = True
                 case 4:
-                    global player_2_dead
-                    global player_2_score
                     match self.damaged:
                         case False:
                             player_2_dead = True
@@ -341,6 +348,9 @@ class Particles:
                         self.pos_x = self.pos_x - random.randint(5, 8)
                         self.vel_x = -self.vel_x
                         if self.damaged:
+                            player_2_score += 1
+                            Pickup_Coin_Sound.play()
+                            player_2.print_score()
                             self.delete = True
                         else:
                             self.color = (255, 215, 0)
@@ -351,6 +361,9 @@ class Particles:
                         self.pos_x = self.pos_x + random.randint(5, 8)
                         self.vel_x = -self.vel_x
                         if self.damaged:
+                            player_2_score += 1
+                            Pickup_Coin_Sound.play()
+                            player_2.print_score()
                             self.delete = True
                         else:
                             self.color = (255, 215, 0)
@@ -361,6 +374,9 @@ class Particles:
                         self.pos_y = self.pos_y - random.randint(5, 8)
                         self.vel_y = -self.vel_y
                         if self.damaged:
+                            player_2_score += 1
+                            Pickup_Coin_Sound.play()
+                            player_2.print_score()
                             self.delete = True
                         else:
                             self.color = (255, 215, 0)
@@ -789,9 +805,9 @@ while running:
                 draw_with_rect(wall_right_rect, (0, 50, 0))
 
                 #testing
-                draw_image(Vertical_Deflect_Bar, player_2_x - 30, player_2_y, True)
-                draw_image(Horizontal_Deflect_Bar, player_2_x, player_2_y - 30, True)
-                draw_image(Vertical_Deflect_Bar, player_2_x + 30, player_2_y, True)
+                #draw_image(Vertical_Deflect_Bar, player_2_x - 30, player_2_y, True)
+                #draw_image(Horizontal_Deflect_Bar, player_2_x, player_2_y - 30, True)
+                #draw_image(Vertical_Deflect_Bar, player_2_x + 30, player_2_y, True)
 
 
                 particlesObj.spawn_particle()
@@ -805,31 +821,30 @@ while running:
                         #each frame, the game will iterate through the while loop, and check to see if the current frame is equal to the targeted frame
                         #if so, it will clear the image and assign a value of false to a global variable for whether the player is blocking on that side
                         #if not, it will not return any value
-                global player_2_dead
-                global player_2_score
-                global player_1_dead
-                global player_1_score
+
+                player_1.print_score()
+                player_2.print_score()
 
                 if player_2_dead:
-                    playing = False
                     game_end(1)
                 if player_1_dead:
-                    playing = False
-                    game_end(1)
+                    game_end(2)
 
-                event_checker.check_for_end()
+                #event_checker.check_for_end()
 
-                if event_checker.game_over:
-                    if player_1_score > player_2_score:
-                        game_end(1)
-                    if player_1_score < player_2_score:
-                        game_end(2)
-                    else:
-                        game_end(0)
+                #if event_checker.game_over:
+                    #if player_1_score > player_2_score:
+                        #game_end(1)
+                    #if player_1_score < player_2_score:
+                        #game_end(2)
+                    #else:
+                        #game_end(0)
+                    #pygame.time.delay(1000 * 5)
+                    #playing = False
+
+                if player_1_dead or player_2_dead:
                     pygame.time.delay(1000 * 5)
-                else:
-                    continue
-
+                    playing = False
 
 
         case 2: #2 player mode)
