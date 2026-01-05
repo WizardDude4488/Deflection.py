@@ -135,10 +135,10 @@ event_checker = Event()
 #globals for player 1 and 2 x and y positions
 #make sure to create player objects after variable declaration so interpreter knows what value to assign for the new object's parameters
 player_1_x = screen_width // 2
-player_1_y = 35 + 50
+player_1_y = 35 + 40
 
 player_2_x = screen_width // 2
-player_2_y = screen_height - 35 - 50
+player_2_y = screen_height - 35 - 40
 
 #creating the rects for the different objects in the game that the particles can collide with
 #added a little bit of buffer so it's more forgiving for the players
